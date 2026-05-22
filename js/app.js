@@ -40,6 +40,15 @@ window.addEventListener('DOMContentLoaded', () => {
         Visualizer.noteOff(midi);
     });
 
+    // Setup Chord UI
+    ChordUI.init();
+
+    // Connect ChordPlayer to keyboard visualization
+    ChordPlayer.onNotesChangeHandler(midiNotes => {
+        ChordUI.updateKeyboardHighlight(midiNotes);
+        midiNotes.forEach(midi => Visualizer.noteOn(midi));
+    });
+
     // Initial render
     applyLayout(savedLayout);
 });

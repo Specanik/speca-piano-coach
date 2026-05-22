@@ -13,6 +13,28 @@
             <p class="subtitle">Click chuột hoặc dùng bàn phím để chơi</p>
         </header>
 
+        <!-- Chord Search Bar -->
+        <div class="chord-search-container">
+            <div class="search-input-wrapper">
+                <input 
+                    type="text" 
+                    id="chord-search" 
+                    class="chord-search-input" 
+                    placeholder="🔍 Tìm kiếm hợp âm (C, Am, G7, Cmaj7...)"
+                    autocomplete="off"
+                >
+                <ul id="chord-results" class="chord-results-list"></ul>
+            </div>
+        </div>
+
+        <!-- Chord Details Modal -->
+        <div id="chord-modal" class="chord-modal">
+            <div class="chord-modal-content">
+                <button class="chord-modal-close">✕</button>
+                <div id="chord-details-content"></div>
+            </div>
+        </div>
+
         <div class="controls">
             <div class="control-row">
                 <span class="control-label">Theme</span>
@@ -57,6 +79,9 @@
     <script src="js/audio.js"></script>
     <script src="js/keyboard.js"></script>
     <script src="js/visualizer.js"></script>
+    <script src="js/chords.js"></script>
+    <script src="js/chordPlayer.js"></script>
+    <script src="js/chordUI.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

@@ -508,6 +508,495 @@ body[data-theme="minimal"] .key-black.active {
     box-shadow: 1px 3px 5px rgba(0,0,0,0.3), inset 0 2px 5px rgba(0,50,100,0.3);
 }
 
+/* ================================================================
+   CHORD SEARCH & MODAL
+   ================================================================ */
+
+.chord-search-container {
+    width: 100%;
+    max-width: 600px;
+    padding: 0 1rem;
+    position: relative;
+}
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.chord-search-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ccc;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.chord-search-input:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(100, 160, 255, 0.4);
+    box-shadow: 0 0 0 2px rgba(100, 160, 255, 0.1);
+}
+
+.chord-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.chord-results-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    list-style: none;
+    background: rgba(20, 20, 30, 0.95);
+    border: 1px solid rgba(100, 160, 255, 0.2);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: -8px;
+    padding-top: 8px;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.chord-result-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(100, 160, 255, 0.1);
+    transition: background 0.15s ease;
+}
+
+.chord-result-item:hover {
+    background: rgba(100, 160, 255, 0.1);
+}
+
+.chord-result-item:last-child {
+    border-bottom: none;
+}
+
+.chord-name {
+    display: block;
+    color: #7ab8e8;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.chord-aliases {
+    display: block;
+    color: #555;
+    font-size: 0.85rem;
+}
+
+.no-results {
+    padding: 20px 16px;
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* ── Chord Modal ── */
+.chord-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.chord-modal.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.chord-modal-content {
+    position: relative;
+    background: linear-gradient(to bottom, #242436 0%, #1a1a2a 100%);
+    border: 1px solid rgba(100, 160, 255, 0.2);
+    border-radius: 12px;
+    max-width: 700px;
+    max-height: 85vh;
+    overflow-y: auto;
+    width: 90%;
+    padding: 30px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(100, 160, 255, 0.15);
+}
+
+.chord-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ccc;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.chord-modal-close:hover {
+    background: rgba(255, 0, 0, 0.2);
+    border-color: rgba(255, 100, 100, 0.3);
+    color: #ff6b6b;
+}
+
+/* ── Chord Detail Header ── */
+.chord-detail-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(100, 160, 255, 0.15);
+}
+
+.chord-detail-header h2 {
+    color: #ffffff;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    font-weight: 300;
+}
+
+.chord-aliases {
+    color: #7ab8e8;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+
+.chord-description {
+    color: #aaa;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* ── Chord Voicings ── */
+.chord-voicings {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(100, 160, 255, 0.1);
+}
+
+.chord-voicings h3 {
+    color: #7ab8e8;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.chord-voicings ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.chord-voicings li {
+    color: #bbb;
+    padding: 8px 0;
+    padding-left: 20px;
+    position: relative;
+    font-size: 0.95rem;
+}
+
+.chord-voicings li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #7ab8e8;
+}
+
+/* ── Chord Variations ── */
+.chord-variations {
+    margin-top: 30px;
+}
+
+.variation-section {
+    margin-bottom: 30px;
+}
+
+.variation-section h3 {
+    color: #7ab8e8;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(100, 160, 255, 0.1);
+}
+
+.variations-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.variation-card {
+    background: rgba(100, 160, 255, 0.05);
+    border: 1px solid rgba(100, 160, 255, 0.15);
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.2s ease;
+}
+
+.variation-card:hover {
+    background: rgba(100, 160, 255, 0.08);
+    border-color: rgba(100, 160, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(100, 160, 255, 0.1);
+}
+
+.variation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.variation-name {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.variation-difficulty {
+    background: rgba(100, 160, 255, 0.2);
+    color: #7ab8e8;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.variation-notes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.note-badge {
+    display: inline-block;
+    background: rgba(100, 160, 255, 0.15);
+    color: #7ab8e8;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.play-chord-btn {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(100, 160, 255, 0.3) 0%, rgba(120, 100, 200, 0.2) 100%);
+    border: 1px solid rgba(100, 160, 255, 0.3);
+    border-radius: 6px;
+    color: #7ab8e8;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.play-chord-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(100, 160, 255, 0.4) 0%, rgba(120, 100, 200, 0.3) 100%);
+    border-color: rgba(100, 160, 255, 0.5);
+    box-shadow: 0 0 12px rgba(100, 160, 255, 0.2);
+}
+
+.play-chord-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ── Chord Highlight on Keys ── */
+.key-white.chord-highlight {
+    background: linear-gradient(to bottom, #ffd700 0%, #ffed4e 25%, #ffff99 100%);
+    border-color: #c9a500;
+    box-shadow: 
+        inset 0 4px 10px rgba(200, 165, 0, 0.3),
+        0 0 15px rgba(255, 215, 0, 0.4),
+        0 3px 5px rgba(0, 0, 0, 0.4);
+}
+
+.key-black.chord-highlight {
+    background: linear-gradient(160deg, #ff8c00 0%, #ff6b00 30%, #cc5500 100%);
+    box-shadow:
+        1px 3px 6px rgba(0, 0, 0, 0.9),
+        0 0 12px rgba(255, 140, 0, 0.5),
+        inset 0 1px 0 rgba(255, 200, 100, 0.3);
+}
+
+/* ── Theme-specific chord styles ── */
+body[data-theme="grand"] .chord-modal-content {
+    background: linear-gradient(to bottom, #3a2a18 0%, #2a1c10 100%);
+    border-color: rgba(200, 160, 50, 0.2);
+}
+
+body[data-theme="grand"] .chord-search-input {
+    background: rgba(200, 160, 50, 0.05);
+    border-color: rgba(200, 160, 50, 0.15);
+    color: #d4a84c;
+}
+
+body[data-theme="grand"] .chord-search-input:focus {
+    background: rgba(200, 160, 50, 0.1);
+    border-color: rgba(200, 160, 50, 0.4);
+    box-shadow: 0 0 0 2px rgba(200, 160, 50, 0.1);
+}
+
+body[data-theme="grand"] .chord-search-input::placeholder {
+    color: rgba(200, 160, 50, 0.4);
+}
+
+body[data-theme="grand"] .chord-results-list {
+    background: rgba(30, 20, 10, 0.95);
+    border-color: rgba(200, 160, 50, 0.2);
+}
+
+body[data-theme="grand"] .chord-result-item:hover {
+    background: rgba(200, 160, 50, 0.1);
+}
+
+body[data-theme="grand"] .chord-name {
+    color: #c9a84c;
+}
+
+body[data-theme="grand"] .chord-detail-header {
+    border-bottom-color: rgba(200, 160, 50, 0.15);
+}
+
+body[data-theme="grand"] .chord-detail-header h2 {
+    color: #d4a84c;
+}
+
+body[data-theme="grand"] .chord-aliases {
+    color: #c9a84c;
+}
+
+body[data-theme="neon"] .chord-modal-content {
+    background: #0a0a10;
+    border-color: rgba(0, 200, 255, 0.2);
+}
+
+body[data-theme="neon"] .chord-search-input {
+    background: rgba(0, 200, 255, 0.05);
+    border-color: rgba(0, 200, 255, 0.15);
+    color: #00e5ff;
+}
+
+body[data-theme="neon"] .chord-search-input:focus {
+    background: rgba(0, 200, 255, 0.1);
+    border-color: rgba(0, 200, 255, 0.4);
+    box-shadow: 0 0 0 2px rgba(0, 200, 255, 0.1);
+}
+
+body[data-theme="neon"] .chord-search-input::placeholder {
+    color: rgba(0, 200, 255, 0.4);
+}
+
+body[data-theme="neon"] .chord-results-list {
+    background: rgba(10, 10, 15, 0.95);
+    border-color: rgba(0, 200, 255, 0.2);
+}
+
+body[data-theme="neon"] .chord-result-item:hover {
+    background: rgba(0, 200, 255, 0.1);
+}
+
+body[data-theme="neon"] .chord-name {
+    color: #00e5ff;
+}
+
+body[data-theme="neon"] .chord-detail-header {
+    border-bottom-color: rgba(0, 200, 255, 0.15);
+}
+
+body[data-theme="neon"] .chord-detail-header h2 {
+    color: #00e5ff;
+    text-shadow: 0 0 10px rgba(0, 200, 255, 0.3);
+}
+
+body[data-theme="neon"] .chord-aliases {
+    color: #00e5ff;
+}
+
+body[data-theme="minimal"] .chord-modal-content {
+    background: linear-gradient(to bottom, #f5f5f5 0%, #ebebeb 100%);
+    border-color: #d5d5d5;
+}
+
+body[data-theme="minimal"] .chord-search-input {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: #d5d5d5;
+    color: #333;
+}
+
+body[data-theme="minimal"] .chord-search-input:focus {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: #2a5a90;
+    box-shadow: 0 0 0 2px rgba(42, 90, 144, 0.1);
+}
+
+body[data-theme="minimal"] .chord-search-input::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="minimal"] .chord-results-list {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #d5d5d5;
+}
+
+body[data-theme="minimal"] .chord-result-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body[data-theme="minimal"] .chord-name {
+    color: #2a5a90;
+}
+
+body[data-theme="minimal"] .chord-detail-header {
+    border-bottom-color: #e0e0e0;
+}
+
+body[data-theme="minimal"] .chord-detail-header h2 {
+    color: #1a1a2a;
+}
+
+body[data-theme="minimal"] .chord-aliases {
+    color: #2a5a90;
+}
+
+body[data-theme="minimal"] .variation-section h3 {
+    color: #2a5a90;
+    border-bottom-color: #e0e0e0;
+}
+
+body[data-theme="minimal"] .variation-card {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: #d5d5d5;
+}
+
+body[data-theme="minimal"] .variation-card:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: #a0c0e0;
+}
+
 body[data-theme="minimal"] .note-name          { color: #bbb; }
 body[data-theme="minimal"] .key-shortcut-label { color: #ccc; background: rgba(0,0,0,0.04); }
 
