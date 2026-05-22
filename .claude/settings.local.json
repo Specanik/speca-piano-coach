@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Recurse \"d:\\\\AI\\\\canhmd\\\\piano\" | ForEach-Object { $_.FullName })"
+    ]
+  }
+}
