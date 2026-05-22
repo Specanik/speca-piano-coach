@@ -7,73 +7,94 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div id="app">
-        <header class="header">
-            <h1 class="title">PIANO</h1>
-            <p class="subtitle">Click chuột hoặc dùng bàn phím để chơi</p>
-        </header>
+    <div id="app" class="app-layout">
+        <!-- Left: chord search + details (never covers keyboard) -->
+        <aside class="chord-sidebar" aria-label="Hợp âm">
+            <h2 class="chord-sidebar-heading">Hợp âm</h2>
 
-        <!-- Chord Search Bar -->
-        <div class="chord-search-container">
-            <div class="search-input-wrapper">
-                <input 
-                    type="text" 
-                    id="chord-search" 
-                    class="chord-search-input" 
-                    placeholder="🔍 Tìm kiếm hợp âm (C, Am, G7, Cmaj7...)"
-                    autocomplete="off"
-                >
-                <ul id="chord-results" class="chord-results-list"></ul>
+            <div class="chord-sidebar-tabs" role="tablist">
+                <button type="button" class="chord-tab-btn active" data-tab="browse" role="tab" aria-selected="true">Duyệt</button>
+                <button type="button" class="chord-tab-btn" data-tab="search" role="tab" aria-selected="false">Tìm</button>
+                <button type="button" class="chord-tab-btn" data-tab="song" role="tab" aria-selected="false">Đệm hát</button>
             </div>
+
+            <div id="chord-tab-browse" class="chord-tab-panel active" role="tabpanel">
+                <nav id="chord-tree" class="chord-tree" aria-label="Duyệt hợp âm theo nốt gốc"></nav>
+            </div>
+
+            <div id="chord-tab-song" class="chord-tab-panel" role="tabpanel" hidden></div>
+
+            <div id="chord-tab-search" class="chord-tab-panel" role="tabpanel" hidden>
+                <div class="chord-search-container">
+                    <div class="search-input-wrapper">
+                        <input
+                            type="text"
+                            id="chord-search"
+                            class="chord-search-input"
+                            placeholder="Tìm (C, Am, G7...)"
+                            autocomplete="off"
+                        >
+                        <ul id="chord-results" class="chord-results-list"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chord-detail-panel" class="chord-detail-panel" aria-hidden="true">
+                <div class="chord-detail-panel-header">
+                    <span class="chord-detail-panel-title">Chi tiết</span>
+                    <button type="button" class="chord-detail-panel-close" aria-label="Đóng">✕</button>
+                </div>
+                <div id="chord-details-content" class="chord-detail-panel-body"></div>
+            </div>
+        </aside>
+
+        <!-- Right: piano always visible -->
+        <div class="piano-main">
+            <header class="header">
+                <h1 class="title">PIANO</h1>
+                <p class="subtitle">Click chuột hoặc dùng bàn phím để chơi</p>
+            </header>
+
+            <div class="controls">
+                <div class="control-row">
+                    <span class="control-label">Theme</span>
+                    <div class="theme-switcher">
+                        <button class="theme-btn active" data-theme="classic">Classic</button>
+                        <button class="theme-btn" data-theme="grand">Grand</button>
+                        <button class="theme-btn" data-theme="neon">Neon</button>
+                        <button class="theme-btn" data-theme="minimal">Minimal</button>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <span class="control-label">Keys</span>
+                    <div class="layout-switcher">
+                        <button class="layout-btn active" data-layout="36">36</button>
+                        <button class="layout-btn" data-layout="61">61</button>
+                        <button class="layout-btn" data-layout="76">76</button>
+                        <button class="layout-btn" data-layout="88">88</button>
+                    </div>
+                </div>
+            </div>
+
+            <main class="main">
+                <div id="keyboard"></div>
+            </main>
+
+            <footer class="footer">
+                <div class="key-hint">
+                    <div class="hint-row">
+                        <span>Octave 4</span>
+                        <kbd>Z</kbd><kbd>S</kbd><kbd>X</kbd><kbd>D</kbd><kbd>C</kbd>
+                        <kbd>V</kbd><kbd>G</kbd><kbd>B</kbd><kbd>H</kbd><kbd>N</kbd><kbd>J</kbd><kbd>M</kbd>
+                    </div>
+                    <div class="hint-row">
+                        <span>Octave 5</span>
+                        <kbd>Q</kbd><kbd>2</kbd><kbd>W</kbd><kbd>3</kbd><kbd>E</kbd>
+                        <kbd>R</kbd><kbd>5</kbd><kbd>T</kbd><kbd>6</kbd><kbd>Y</kbd><kbd>7</kbd><kbd>U</kbd>
+                    </div>
+                </div>
+            </footer>
         </div>
-
-        <!-- Chord Details Modal -->
-        <div id="chord-modal" class="chord-modal">
-            <div class="chord-modal-content">
-                <button class="chord-modal-close">✕</button>
-                <div id="chord-details-content"></div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <div class="control-row">
-                <span class="control-label">Theme</span>
-                <div class="theme-switcher">
-                    <button class="theme-btn active" data-theme="classic">Classic</button>
-                    <button class="theme-btn" data-theme="grand">Grand</button>
-                    <button class="theme-btn" data-theme="neon">Neon</button>
-                    <button class="theme-btn" data-theme="minimal">Minimal</button>
-                </div>
-            </div>
-            <div class="control-row">
-                <span class="control-label">Keys</span>
-                <div class="layout-switcher">
-                    <button class="layout-btn active" data-layout="36">36</button>
-                    <button class="layout-btn" data-layout="61">61</button>
-                    <button class="layout-btn" data-layout="76">76</button>
-                    <button class="layout-btn" data-layout="88">88</button>
-                </div>
-            </div>
-        </div>
-
-        <main class="main">
-            <div id="keyboard"></div>
-        </main>
-
-        <footer class="footer">
-            <div class="key-hint">
-                <div class="hint-row">
-                    <span>Octave 4</span>
-                    <kbd>Z</kbd><kbd>S</kbd><kbd>X</kbd><kbd>D</kbd><kbd>C</kbd>
-                    <kbd>V</kbd><kbd>G</kbd><kbd>B</kbd><kbd>H</kbd><kbd>N</kbd><kbd>J</kbd><kbd>M</kbd>
-                </div>
-                <div class="hint-row">
-                    <span>Octave 5</span>
-                    <kbd>Q</kbd><kbd>2</kbd><kbd>W</kbd><kbd>3</kbd><kbd>E</kbd>
-                    <kbd>R</kbd><kbd>5</kbd><kbd>T</kbd><kbd>6</kbd><kbd>Y</kbd><kbd>7</kbd><kbd>U</kbd>
-                </div>
-            </div>
-        </footer>
     </div>
 
     <script src="js/audio.js"></script>
@@ -81,7 +102,11 @@
     <script src="js/visualizer.js"></script>
     <script src="js/chords.js"></script>
     <script src="js/chordPlayer.js"></script>
+    <script src="js/songParser.js"></script>
+    <script src="js/songAccompaniment.js"></script>
+    <script src="js/songPlayer.js"></script>
     <script src="js/chordUI.js"></script>
+    <script src="js/songUI.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

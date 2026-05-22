@@ -1,200 +1,201 @@
 const ChordsDB = (() => {
-    // MIDI note to note name mapping
-    const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-    
-    // Comprehensive chord database
-    const CHORDS_DATA = {
-        'C': {
-            name: 'C Major',
-            root: 0,
-            aliases: ['Cmaj'],
-            variations: {
-                basic: [
-                    { name: 'C Major (Root Position)', notes: [0, 4, 7], midi: [60, 64, 67], difficulty: 'Cơ bản' },
-                    { name: 'C Major (1st Inversion)', notes: [4, 7, 12], midi: [64, 67, 72], difficulty: 'Cơ bản' },
-                    { name: 'C Major (2nd Inversion)', notes: [7, 12, 16], midi: [67, 72, 76], difficulty: 'Cơ bản' },
-                ],
-                intermediate: [
-                    { name: 'Cmaj7', notes: [0, 4, 7, 11], midi: [60, 64, 67, 71], difficulty: 'Trung cấp' },
-                    { name: 'Cmaj9', notes: [0, 4, 7, 11, 14], midi: [60, 64, 67, 71, 74], difficulty: 'Trung cấp' },
-                ],
-                advanced: [
-                    { name: 'Cmaj7#11', notes: [0, 4, 7, 11, 18], midi: [60, 64, 67, 71, 78], difficulty: 'Nâng cao' },
-                    { name: 'Cmaj13', notes: [0, 4, 7, 11, 14, 21], midi: [60, 64, 67, 71, 74, 81], difficulty: 'Nâng cao' },
-                ]
-            },
-            description: 'Hợp âm trưởng cơ bản với âm thanh sáng sủa và vui vẻ. Được tạo từ các nốt: C, E, G',
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const ROOT_ORDER = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const BASE_OCTAVE = 4;
+
+    const CHORD_TYPES = [
+        { suffix: '', type: 'major', label: 'Trưởng', name: 'Major', intervals: [0, 4, 7],
+          extInt: { intermediate: [[0, 4, 7, 11]], advanced: [[0, 4, 7, 11, 14]] } },
+        { suffix: 'm', type: 'minor', label: 'Thứ', name: 'Minor', intervals: [0, 3, 7],
+          extInt: { intermediate: [[0, 3, 7, 10]], advanced: [[0, 3, 7, 10, 14]] } },
+        { suffix: '7', type: 'dom7', label: '7', name: 'Dominant 7', intervals: [0, 4, 7, 10],
+          extInt: { intermediate: [[0, 4, 7, 10, 14]], advanced: [[0, 4, 7, 10, 13, 14]] } },
+        { suffix: 'maj7', type: 'maj7', label: 'Maj7', name: 'Major 7', intervals: [0, 4, 7, 11],
+          extInt: { intermediate: [[0, 4, 7, 11, 14]], advanced: [[0, 4, 7, 11, 14, 17]] } },
+        { suffix: 'm7', type: 'm7', label: 'm7', name: 'Minor 7', intervals: [0, 3, 7, 10],
+          extInt: { intermediate: [[0, 3, 7, 10, 14]], advanced: [[0, 3, 7, 10, 14, 17]] } },
+        { suffix: '6', type: 'six', label: '6', name: 'Major 6', intervals: [0, 4, 7, 9],
+          extInt: { intermediate: [[0, 4, 7, 9, 14]], advanced: [[0, 4, 7, 9, 11, 14]] } },
+        { suffix: 'm6', type: 'm6', label: 'm6', name: 'Minor 6', intervals: [0, 3, 7, 9],
+          extInt: { intermediate: [[0, 3, 7, 9, 14]], advanced: [[0, 3, 7, 9, 10, 14]] } },
+        { suffix: '9', type: 'dom9', label: '9', name: 'Dominant 9', intervals: [0, 4, 7, 10, 14],
+          extInt: { intermediate: [[0, 4, 7, 10, 14, 17]], advanced: [[0, 4, 7, 10, 13, 14]] } },
+        { suffix: 'maj9', type: 'maj9', label: 'Maj9', name: 'Major 9', intervals: [0, 4, 7, 11, 14],
+          extInt: { intermediate: [[0, 4, 7, 11, 14, 17]], advanced: [[0, 4, 7, 11, 14, 17, 21]] } },
+        { suffix: 'add9', type: 'add9', label: 'Add9', name: 'Add 9', intervals: [0, 4, 7, 14],
+          extInt: { intermediate: [[0, 4, 7, 11, 14]], advanced: [[0, 4, 7, 14, 17]] } },
+        { suffix: 'sus4', type: 'sus4', label: 'Sus4', name: 'Suspended 4', intervals: [0, 5, 7],
+          extInt: { intermediate: [[0, 5, 7, 10]], advanced: [[0, 5, 7, 10, 14]] } },
+        { suffix: 'sus2', type: 'sus2', label: 'Sus2', name: 'Suspended 2', intervals: [0, 2, 7],
+          extInt: { intermediate: [[0, 2, 7, 10]], advanced: [[0, 2, 7, 14]] } },
+        { suffix: 'dim', type: 'dim', label: 'Dim', name: 'Diminished', intervals: [0, 3, 6],
+          extInt: { intermediate: [[0, 3, 6, 9]], advanced: [[0, 3, 6, 9, 12]] } },
+        { suffix: 'aug', type: 'aug', label: 'Aug', name: 'Augmented', intervals: [0, 4, 8],
+          extInt: { intermediate: [[0, 4, 8, 11]], advanced: [[0, 4, 8, 11, 14]] } },
+        { suffix: 'm7b5', type: 'm7b5', label: 'm7♭5', name: 'Half-Diminished', intervals: [0, 3, 6, 10],
+          extInt: { intermediate: [[0, 3, 6, 10, 14]], advanced: [[0, 3, 6, 10, 13, 14]] } }
+    ];
+
+    const TYPE_SORT = Object.fromEntries(CHORD_TYPES.map((t, i) => [t.type, i]));
+    const TYPE_LABELS = Object.fromEntries(CHORD_TYPES.map(t => [t.type, t.label]));
+
+    const SUFFIX_RULES = [...CHORD_TYPES]
+        .sort((a, b) => b.suffix.length - a.suffix.length)
+        .map(t => ({ suffix: t.suffix, type: t.type, label: t.label }));
+
+    function rootToPc(rootName) {
+        return ROOT_ORDER.indexOf(rootName);
+    }
+
+    function intervalsToMidi(rootPc, intervals) {
+        const base = 12 * (BASE_OCTAVE + 1) + rootPc;
+        return intervals.map(i => base + i);
+    }
+
+    function intervalsToNames(rootPc, intervals) {
+        return intervals.map(i => NOTE_NAMES[(rootPc + i) % 12]);
+    }
+
+    function makeVariation(key, intervals, rootPc, tier, index) {
+        const tierLabel = tier === 'basic' ? 'Cơ bản' : tier === 'intermediate' ? 'Trung cấp' : 'Nâng cao';
+        const suffix = index > 0 ? ` v${index + 1}` : '';
+        return {
+            name: `${key}${suffix}`,
+            notes: intervals,
+            midi: intervalsToMidi(rootPc, intervals),
+            difficulty: tierLabel
+        };
+    }
+
+    function buildVoicingHint(rootName, intervals) {
+        const names = intervalsToNames(rootToPc(rootName), intervals);
+        return `Các nốt: ${names.join(' – ')}`;
+    }
+
+    function buildChordEntry(rootName, typeDef) {
+        const root = rootToPc(rootName);
+        const key = rootName + typeDef.suffix;
+        const aliases = [key];
+        if (typeDef.suffix === 'm') aliases.push(rootName + 'min');
+        if (typeDef.suffix === '') aliases.push(rootName + 'maj');
+        if (typeDef.suffix === '7') aliases.push(rootName + 'dom7');
+
+        const basic = [makeVariation(key, typeDef.intervals, root, 'basic', 0)];
+        const intermediate = (typeDef.extInt?.intermediate || []).map((ints, i) =>
+            makeVariation(key, ints, root, 'intermediate', i)
+        );
+        const advanced = (typeDef.extInt?.advanced || []).map((ints, i) =>
+            makeVariation(key, ints, root, 'advanced', i)
+        );
+
+        const noteStr = intervalsToNames(root, typeDef.intervals).join(', ');
+
+        return {
+            name: `${rootName} ${typeDef.name}`,
+            root,
+            aliases,
+            variations: { basic, intermediate, advanced },
+            description: `Hợp âm ${typeDef.label} (${rootName}). Nốt trong bậc: ${noteStr}.`,
             voicings: [
-                'Sử dụng 3 tay ngón: C-E-G',
-                'Voicing mở rộng trên 2 tay',
-                'Voicing đóng với các ngón tay xếp chồng'
+                buildVoicingHint(rootName, typeDef.intervals),
+                'Bậc gốc — phù hợp nhạc pop/rock',
+                intermediate.length ? 'Biến thể trung cấp có thêm nốt mở rộng' : 'Thử đảo bậc (inversion) khi đã quen'
             ]
-        },
-        'Cm': {
-            name: 'C Minor',
-            root: 0,
-            aliases: ['Cmin'],
-            variations: {
-                basic: [
-                    { name: 'C Minor (Root Position)', notes: [0, 3, 7], midi: [60, 63, 67], difficulty: 'Cơ bản' },
-                    { name: 'C Minor (1st Inversion)', notes: [3, 7, 12], midi: [63, 67, 72], difficulty: 'Cơ bản' },
-                ],
-                intermediate: [
-                    { name: 'Cm7', notes: [0, 3, 7, 10], midi: [60, 63, 67, 70], difficulty: 'Trung cấp' },
-                    { name: 'Cm9', notes: [0, 3, 7, 10, 14], midi: [60, 63, 67, 70, 74], difficulty: 'Trung cấp' },
-                ],
-                advanced: [
-                    { name: 'Cm11', notes: [0, 3, 7, 10, 14, 17], midi: [60, 63, 67, 70, 74, 77], difficulty: 'Nâng cao' },
-                ]
-            },
-            description: 'Hợp âm thứ với âm thanh u sầu, tăm tối. Được tạo từ các nốt: C, D#, G',
-            voicings: [
-                'Voicing cơ bản 3 nốt',
-                'Voicing với phím 7 ở dưới cùng',
-                'Voicing mở rộng 5 nốt'
-            ]
-        },
-        'C7': {
-            name: 'C Dominant 7',
-            root: 0,
-            aliases: ['Cdom7'],
-            variations: {
-                basic: [
-                    { name: 'C7 (Root Position)', notes: [0, 4, 7, 10], midi: [60, 64, 67, 70], difficulty: 'Cơ bản' },
-                ],
-                intermediate: [
-                    { name: 'C7b9', notes: [0, 4, 7, 10, 13], midi: [60, 64, 67, 70, 73], difficulty: 'Trung cấp' },
-                    { name: 'C7#9', notes: [0, 4, 7, 10, 15], midi: [60, 64, 67, 70, 75], difficulty: 'Trung cấp' },
-                ],
-                advanced: [
-                    { name: 'C7#11', notes: [0, 4, 7, 10, 18], midi: [60, 64, 67, 70, 78], difficulty: 'Nâng cao' },
-                ]
-            },
-            description: 'Hợp âm thứ 7 với nhấn mạnh sáu. Được tạo từ: C, E, G, Bb',
-            voicings: [
-                'Voicing cơ bản 4 nốt',
-                'Voicing với 9 (nhọn hay phẳng)',
-                'Voicing jazz phức tạp'
-            ]
-        },
-        'Csus': {
-            name: 'C Suspended',
-            root: 0,
-            aliases: ['Csus4'],
-            variations: {
-                basic: [
-                    { name: 'Csus4', notes: [0, 5, 7], midi: [60, 65, 67], difficulty: 'Cơ bản' },
-                    { name: 'Csus2', notes: [0, 2, 7], midi: [60, 62, 67], difficulty: 'Cơ bản' },
-                ],
-                intermediate: [
-                    { name: 'Csus4add7', notes: [0, 5, 7, 10], midi: [60, 65, 67, 70], difficulty: 'Trung cấp' },
-                ],
-                advanced: [
-                    { name: 'Csus2add9', notes: [0, 2, 7, 14], midi: [60, 62, 67, 74], difficulty: 'Nâng cao' },
-                ]
-            },
-            description: 'Hợp âm treo với sự căng thẳng độc đáo. Thường chuyển tiếp đến C Major hoặc C Minor',
-            voicings: [
-                'Thay thế thứ 3 bằng thứ 4',
-                'Thay thế thứ 3 bằng thứ 2',
-                'Kết hợp sus4 và sus2'
-            ]
-        },
-        'G': {
-            name: 'G Major',
-            root: 7,
-            aliases: ['Gmaj'],
-            variations: {
-                basic: [
-                    { name: 'G Major (Root Position)', notes: [7, 11, 2], midi: [67, 71, 74], difficulty: 'Cơ bản' },
-                    { name: 'G Major (1st Inversion)', notes: [11, 2, 7], midi: [71, 74, 79], difficulty: 'Cơ bản' },
-                ],
-                intermediate: [
-                    { name: 'Gmaj7', notes: [7, 11, 2, 6], midi: [67, 71, 74, 78], difficulty: 'Trung cấp' },
-                    { name: 'Gmaj9', notes: [7, 11, 2, 6, 9], midi: [67, 71, 74, 78, 81], difficulty: 'Trung cấp' },
-                ],
-                advanced: [
-                    { name: 'Gmaj7#11', notes: [7, 11, 2, 6, 13], midi: [67, 71, 74, 78, 85], difficulty: 'Nâng cao' },
-                ]
-            },
-            description: 'Hợp âm trưởng G với âm thanh tươi sáng. Được tạo từ: G, B, D',
-            voicings: [
-                'Voicing mở rộng với G ở dưới',
-                'Voicing compact D-G-B',
-                'Voicing mở rộng jazz'
-            ]
-        },
-        'D': {
-            name: 'D Major',
-            root: 2,
-            aliases: ['Dmaj'],
-            variations: {
-                basic: [
-                    { name: 'D Major (Root Position)', notes: [2, 6, 9], midi: [62, 66, 69], difficulty: 'Cơ bản' },
-                    { name: 'D Major (1st Inversion)', notes: [6, 9, 14], midi: [66, 69, 74], difficulty: 'Cơ bản' },
-                ],
-                intermediate: [
-                    { name: 'Dmaj7', notes: [2, 6, 9, 13], midi: [62, 66, 69, 73], difficulty: 'Trung cấp' },
-                ],
-                advanced: [
-                    { name: 'Dmaj7#11', notes: [2, 6, 9, 13, 18], midi: [62, 66, 69, 73, 78], difficulty: 'Nâng cao' },
-                ]
-            },
-            description: 'Hợp âm trưởng D với âm thanh rõ ràng. Được tạo từ: D, F#, A',
-            voicings: [
-                'Voicing cơ bản D-F#-A',
-                'Voicing mở rộng trên octave',
-                'Voicing jazz phức tạp'
-            ]
-        },
-        'Am': {
-            name: 'A Minor',
-            root: 9,
-            aliases: ['Amin'],
-            variations: {
-                basic: [
-                    { name: 'A Minor (Root Position)', notes: [9, 0, 4], midi: [69, 60, 64], difficulty: 'Cơ bản' },
-                    { name: 'A Minor (1st Inversion)', notes: [0, 4, 9], midi: [60, 64, 69], difficulty: 'Cơ bản' },
-                ],
-                intermediate: [
-                    { name: 'Am7', notes: [9, 0, 4, 7], midi: [69, 60, 64, 67], difficulty: 'Trung cấp' },
-                    { name: 'Am9', notes: [9, 0, 4, 7, 2], midi: [69, 60, 64, 67, 74], difficulty: 'Trung cấp' },
-                ],
-                advanced: [
-                    { name: 'Am11', notes: [9, 0, 4, 7, 2, 5], midi: [69, 60, 64, 67, 74, 77], difficulty: 'Nâng cao' },
-                ]
-            },
-            description: 'Hợp âm thứ A với âm thanh buồn bã, u sầu. Được tạo từ: A, C, E',
-            voicings: [
-                'Voicing cơ bản 3 nốt',
-                'Voicing Am7 phổ biến',
-                'Voicing jazz mở rộng'
-            ]
-        }
-    };
+        };
+    }
+
+    const CHORDS_DATA = {};
+    ROOT_ORDER.forEach(rootName => {
+        CHORD_TYPES.forEach(typeDef => {
+            const key = rootName + typeDef.suffix;
+            CHORDS_DATA[key] = buildChordEntry(rootName, typeDef);
+        });
+    });
 
     function searchChords(query) {
         const q = query.toLowerCase().trim();
-        if (!q) return Object.values(CHORDS_DATA);
-        
-        return Object.values(CHORDS_DATA).filter(chord => {
-            return chord.name.toLowerCase().includes(q) ||
-                   chord.aliases.some(alias => alias.toLowerCase().includes(q));
-        });
+        const all = Object.entries(CHORDS_DATA).map(([key, chord]) => ({ key, ...chord }));
+        if (!q) return all;
+
+        return all.filter(chord =>
+            chord.key.toLowerCase().includes(q) ||
+            chord.name.toLowerCase().includes(q) ||
+            chord.aliases.some(alias => alias.toLowerCase().includes(q))
+        );
     }
 
     function getChord(chordName) {
         return CHORDS_DATA[chordName] || null;
     }
 
+    function resolveChordKey(raw) {
+        const name = raw.trim();
+        if (!name) return null;
+        if (CHORDS_DATA[name]) return name;
+
+        const lower = name.toLowerCase();
+        for (const [key, chord] of Object.entries(CHORDS_DATA)) {
+            if (key.toLowerCase() === lower) return key;
+            if (chord.aliases.some(a => a.toLowerCase() === lower)) return key;
+        }
+        return null;
+    }
+
     function getAllChords() {
         return Object.entries(CHORDS_DATA).map(([key, chord]) => ({ key, ...chord }));
+    }
+
+    function parseChordKey(key) {
+        for (const rule of SUFFIX_RULES) {
+            if (rule.suffix === '') {
+                if (ROOT_ORDER.includes(key)) {
+                    return { root: key, type: 'major' };
+                }
+                continue;
+            }
+            if (key.endsWith(rule.suffix)) {
+                const root = key.slice(0, -rule.suffix.length);
+                if (ROOT_ORDER.includes(root)) {
+                    return { root, type: rule.type };
+                }
+            }
+        }
+        return { root: key, type: 'other' };
+    }
+
+    function getChordTree() {
+        const byRoot = new Map();
+
+        Object.entries(CHORDS_DATA).forEach(([key, chord]) => {
+            const { root, type } = parseChordKey(key);
+            if (!byRoot.has(root)) byRoot.set(root, []);
+            byRoot.get(root).push({
+                key,
+                label: key,
+                type,
+                typeLabel: TYPE_LABELS[type] || type,
+                name: chord.name
+            });
+        });
+
+        const sortChords = list => list.sort((a, b) => {
+            const oa = TYPE_SORT[a.type] ?? 99;
+            const ob = TYPE_SORT[b.type] ?? 99;
+            return oa - ob || a.label.localeCompare(b.label);
+        });
+
+        return ROOT_ORDER
+            .filter(root => byRoot.has(root))
+            .map(root => ({
+                id: root,
+                label: root,
+                chords: sortChords(byRoot.get(root))
+            }));
     }
 
     function getMidiNotes(chordName, variationType = 'basic', variationIndex = 0) {
         const chord = CHORDS_DATA[chordName];
         if (!chord) return [];
-        
         const variation = chord.variations[variationType]?.[variationIndex];
         return variation ? variation.midi : [];
     }
@@ -202,9 +203,13 @@ const ChordsDB = (() => {
     return {
         searchChords,
         getChord,
+        resolveChordKey,
         getAllChords,
+        getChordTree,
         getMidiNotes,
         CHORDS_DATA,
-        NOTE_NAMES
+        NOTE_NAMES,
+        ROOT_ORDER,
+        CHORD_TYPES
     };
 })();

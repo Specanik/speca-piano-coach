@@ -43,10 +43,19 @@ window.addEventListener('DOMContentLoaded', () => {
     // Setup Chord UI
     ChordUI.init();
 
-    // Connect ChordPlayer to keyboard visualization
+    // Connect ChordPlayer to keyboard visualization (sync on/off per note)
+    let chordVisNotes = new Set();
     ChordPlayer.onNotesChangeHandler(midiNotes => {
         ChordUI.updateKeyboardHighlight(midiNotes);
-        midiNotes.forEach(midi => Visualizer.noteOn(midi));
+
+        const next = new Set(midiNotes);
+        chordVisNotes.forEach(midi => {
+            if (!next.has(midi)) Visualizer.noteOff(midi);
+        });
+        midiNotes.forEach(midi => {
+            if (!chordVisNotes.has(midi)) Visualizer.noteOn(midi);
+        });
+        chordVisNotes = next;
     });
 
     // Initial render
