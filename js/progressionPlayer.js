@@ -114,10 +114,78 @@ const ProgressionPlayer = (() => {
         }
     ];
 
+    const VOICING_TYPES = [
+        {
+            id: 'close135', label: '1–3–5',
+            desc: 'Hợp âm 3 nốt cơ bản',
+            build(base, ext, rootMidi) {
+                return base.slice(0, 3).map(i => rootMidi + i);
+            }
+        },
+        {
+            id: 'open158', label: '1–5–8',
+            desc: 'Rộng: root + quãng 5 + octave',
+            build(base, ext, rootMidi) {
+                return [rootMidi, rootMidi + (base[2] || 7), rootMidi + 12];
+            }
+        },
+        {
+            id: 'full1358', label: '1–3–5–8',
+            desc: 'Đầy đủ: triad + octave',
+            build(base, ext, rootMidi) {
+                return [...base.slice(0, 3).map(i => rootMidi + i), rootMidi + 12];
+            }
+        },
+        {
+            id: 'spread1510', label: '1–5–10',
+            desc: 'Trải rộng: bass + 5th + 3rd lên octave',
+            build(base, ext, rootMidi) {
+                return [rootMidi, rootMidi + (base[2] || 7), rootMidi + (base[1] || 4) + 12];
+            }
+        },
+        {
+            id: 'color7', label: '7th',
+            desc: 'Hợp âm 7th màu sắc',
+            build(base, ext, rootMidi) {
+                const notes = base.length >= 4 ? base.slice(0, 4) : (ext.length >= 4 ? ext.slice(0, 4) : [...base.slice(0, 3), base[2] + 3]);
+                return notes.map(i => rootMidi + i);
+            }
+        },
+        {
+            id: 'color9', label: '9th',
+            desc: 'Hợp âm 9th — jazz, phong phú',
+            build(base, ext, rootMidi) {
+                const four = base.length >= 4 ? base.slice(0, 4) : (ext.length >= 4 ? ext.slice(0, 4) : [...base.slice(0, 3), base[2] + 3]);
+                const five = ext.length >= 5 ? ext.slice(0, 5) : [...four, 14];
+                return five.map(i => rootMidi + i);
+            }
+        },
+        {
+            id: 'shell37', label: 'Shell',
+            desc: 'Jazz shell: root + 3rd + 7th',
+            build(base, ext, rootMidi) {
+                const third = base[1] || 4;
+                const seventh = base.length >= 4 ? base[3] : (ext.length >= 4 ? ext[3] : third + 7);
+                return [rootMidi, rootMidi + third, rootMidi + seventh];
+            }
+        }
+    ];
+
     let selectedKey = localStorage.getItem('piano-prog-key') || 'C';
+    let selectedVoicing = localStorage.getItem('piano-prog-voicing') || 'close135';
     let bpm = parseInt(localStorage.getItem('piano-prog-bpm'), 10) || 76;
     let playingId = null;
     let timers = [];
+
+    function buildVoicingMidi(chordKey) {
+        const chord = ChordsDB.getChord(chordKey);
+        if (!chord) return [];
+        const rootMidi = 12 * 5 + chord.root;
+        const base = chord.variations.basic[0]?.notes || [];
+        const ext  = chord.variations.intermediate[0]?.notes || base;
+        const vtype = VOICING_TYPES.find(v => v.id === selectedVoicing) || VOICING_TYPES[0];
+        return vtype.build(base, ext, rootMidi);
+    }
 
     function getChordKey(semitone, type, rootName) {
         const rootPc = NOTE_NAMES.indexOf(rootName);
@@ -163,7 +231,7 @@ const ProgressionPlayer = (() => {
                     });
                 }
 
-                const midi = ChordsDB.getMidiNotes(key, 'basic', 0);
+                const midi = buildVoicingMidi(key);
                 if (midi.length) {
                     ChordPlayer.playWithPattern(midi, 'arpeggioUp', beatMs - 80, true);
                     ChordUI.updateKeyboardHighlight(midi);
@@ -220,6 +288,17 @@ const ProgressionPlayer = (() => {
                     <input type="range" class="prog-bpm-slider" min="48" max="116" step="4" value="${bpm}">
                     <span class="prog-bpm-value">${bpm}</span>
                 </div>
+                <div class="prog-voicing-row">
+                    <span class="prog-ctrl-label">Thế bấm</span>
+                    <div class="prog-voicing-btns">
+                        ${VOICING_TYPES.map(v => `
+                            <button type="button"
+                                class="prog-voicing-btn${v.id === selectedVoicing ? ' active' : ''}"
+                                data-voicing="${v.id}"
+                                title="${v.desc}">${v.label}</button>
+                        `).join('')}
+                    </div>
+                </div>
             </div>
             <div class="prog-list">
                 ${PROGRESSIONS.map(prog => {
@@ -257,6 +336,17 @@ const ProgressionPlayer = (() => {
             });
         });
 
+        container.querySelectorAll('.prog-voicing-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                stopAll();
+                selectedVoicing = btn.dataset.voicing;
+                localStorage.setItem('piano-prog-voicing', selectedVoicing);
+                container.querySelectorAll('.prog-voicing-btn').forEach(b =>
+                    b.classList.toggle('active', b.dataset.voicing === selectedVoicing)
+                );
+            });
+        });
+
         const slider = container.querySelector('.prog-bpm-slider');
         const bpmLabel = container.querySelector('.prog-bpm-value');
         if (slider) {
@@ -288,7 +378,7 @@ const ProgressionPlayer = (() => {
             pill.style.cursor = 'pointer';
             pill.addEventListener('click', e => {
                 e.stopPropagation();
-                const midi = ChordsDB.getMidiNotes(key, 'basic', 0);
+                const midi = buildVoicingMidi(key);
                 if (midi.length) {
                     ChordPlayer.playWithPattern(midi, 'arpeggioUp', 1200, true);
                     ChordUI.updateKeyboardHighlight(midi);
