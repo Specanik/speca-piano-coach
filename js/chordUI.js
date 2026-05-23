@@ -18,6 +18,7 @@ const ChordUI = (() => {
         setupChordTree();
         setupChordPanel();
         SongUI.init();
+        ProgressionPlayer.init();
     }
 
     // ── Sidebar tabs ─────────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ const ChordUI = (() => {
 
         function setTab(tab) {
             if (sidebarTab === 'song' && tab !== 'song') SongUI.stopIfPlaying();
+            if (sidebarTab === 'theory' && tab !== 'theory') ProgressionPlayer.stopAll();
 
             sidebarTab = tab;
             localStorage.setItem('piano-chord-tab', tab);
@@ -75,6 +77,7 @@ const ChordUI = (() => {
     // ── Chord selection ───────────────────────────────────────────────────────
     function selectChord(chordKey) {
         SongUI.stopIfPlaying();
+        ProgressionPlayer.stopAll();
         selectedLevel   = 'basic';
         selectedPattern = localStorage.getItem('piano-play-pattern') || selectedPattern;
         showChordDetails(chordKey);
