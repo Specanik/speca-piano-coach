@@ -1,16 +1,17 @@
 const ChordUI = (() => {
-    let currentChord = null;
+    let currentChord   = null;
     let selectedPattern = localStorage.getItem('piano-play-pattern') || 'block';
-    let selectedLevel = 'basic';
+    let selectedLevel  = 'basic';
 
     const LEVELS = [
-        { id: 'basic', label: 'Cơ bản' },
-        { id: 'intermediate', label: 'Trung' },
-        { id: 'advanced', label: 'Nâng' }
+        { id: 'basic',        label: 'Cơ bản' },
+        { id: 'intermediate', label: 'Trung cấp' },
+        { id: 'advanced',     label: 'Nâng cao' }
     ];
 
     let sidebarTab = 'browse';
 
+    // ── Public init ───────────────────────────────────────────────────────────
     function init() {
         setupSidebarTabs();
         setupSearchBar();
@@ -19,14 +20,16 @@ const ChordUI = (() => {
         SongUI.init();
     }
 
+    // ── Sidebar tabs ─────────────────────────────────────────────────────────
     function setupSidebarTabs() {
         const saved = localStorage.getItem('piano-chord-tab');
-        if (saved === 'search' || saved === 'browse' || saved === 'song') sidebarTab = saved;
+        if (['search', 'browse', 'song', 'theory'].includes(saved)) sidebarTab = saved;
 
-        const tabBtns = document.querySelectorAll('.chord-tab-btn');
+        const tabBtns     = document.querySelectorAll('.chord-tab-btn');
         const browsePanel = document.getElementById('chord-tab-browse');
         const searchPanel = document.getElementById('chord-tab-search');
-        const songPanel = document.getElementById('chord-tab-song');
+        const songPanel   = document.getElementById('chord-tab-song');
+        const theoryPanel = document.getElementById('chord-tab-theory');
         const detailPanel = document.getElementById('chord-detail-panel');
 
         function setTab(tab) {
@@ -41,20 +44,16 @@ const ChordUI = (() => {
                 btn.setAttribute('aria-selected', String(active));
             });
 
-            if (browsePanel) {
-                browsePanel.classList.toggle('active', tab === 'browse');
-                browsePanel.hidden = tab !== 'browse';
-            }
-            if (searchPanel) {
-                searchPanel.classList.toggle('active', tab === 'search');
-                searchPanel.hidden = tab !== 'search';
-            }
-            if (songPanel) {
-                songPanel.classList.toggle('active', tab === 'song');
-                songPanel.hidden = tab !== 'song';
-            }
+            const panels = { browse: browsePanel, search: searchPanel, song: songPanel, theory: theoryPanel };
+            Object.entries(panels).forEach(([key, el]) => {
+                if (!el) return;
+                const isActive = key === tab;
+                el.classList.toggle('active', isActive);
+                el.hidden = !isActive;
+            });
 
-            if (detailPanel && tab === 'song') {
+            // Hide detail panel when switching to song or theory
+            if (detailPanel && (tab === 'song' || tab === 'theory')) {
                 detailPanel.classList.remove('active');
                 detailPanel.setAttribute('aria-hidden', 'true');
             }
@@ -62,12 +61,8 @@ const ChordUI = (() => {
             const resultsList = document.getElementById('chord-results');
             if (tab !== 'search' && resultsList) resultsList.innerHTML = '';
 
-            if (tab === 'search') {
-                document.getElementById('chord-search')?.focus();
-            }
-            if (tab === 'song') {
-                SongUI.onTabShown();
-            }
+            if (tab === 'search') document.getElementById('chord-search')?.focus();
+            if (tab === 'song')   SongUI.onTabShown();
         }
 
         tabBtns.forEach(btn => {
@@ -77,9 +72,10 @@ const ChordUI = (() => {
         setTab(sidebarTab);
     }
 
+    // ── Chord selection ───────────────────────────────────────────────────────
     function selectChord(chordKey) {
         SongUI.stopIfPlaying();
-        selectedLevel = 'basic';
+        selectedLevel   = 'basic';
         selectedPattern = localStorage.getItem('piano-play-pattern') || selectedPattern;
         showChordDetails(chordKey);
 
@@ -103,6 +99,7 @@ const ChordUI = (() => {
         }
     }
 
+    // ── Chord tree (browse tab) ───────────────────────────────────────────────
     function renderChordTree() {
         const treeEl = document.getElementById('chord-tree');
         if (!treeEl) return;
@@ -138,32 +135,28 @@ const ChordUI = (() => {
         treeEl.addEventListener('click', e => {
             const folder = e.target.closest('.chord-tree-folder');
             if (folder) {
-                const group = folder.closest('.chord-tree-group');
+                const group  = folder.closest('.chord-tree-group');
                 const isOpen = group.classList.toggle('is-open');
                 folder.setAttribute('aria-expanded', String(isOpen));
                 return;
             }
-
             const item = e.target.closest('.chord-tree-item');
             if (item) selectChord(item.dataset.chord);
         });
     }
 
+    // ── Search bar ────────────────────────────────────────────────────────────
     function setupSearchBar() {
         const searchInput = document.getElementById('chord-search');
         if (!searchInput) return;
 
         searchInput.addEventListener('input', e => {
-            const query = e.target.value;
-            const results = ChordsDB.searchChords(query);
-            displaySearchResults(results);
+            displaySearchResults(ChordsDB.searchChords(e.target.value));
         });
 
         searchInput.addEventListener('focus', () => {
             if (sidebarTab !== 'search') return;
-            if (!searchInput.value) {
-                displaySearchResults(ChordsDB.getAllChords());
-            }
+            if (!searchInput.value) displaySearchResults(ChordsDB.getAllChords());
         });
     }
 
@@ -183,29 +176,59 @@ const ChordUI = (() => {
             li.className = 'chord-result-item';
             li.innerHTML = `
                 <span class="chord-name">${chord.name}</span>
-                <span class="chord-aliases">${chord.aliases.join(', ')}</span>
+                <span class="chord-aliases">${chord.aliases.join(', ')}${chord.formula ? '  ·  ' + chord.formula : ''}</span>
             `;
             li.addEventListener('click', () => selectChord(chord.key));
             resultsList.appendChild(li);
         });
     }
 
-    function shortVariationName(name) {
-        const parts = name.split('(');
-        return parts[0].trim();
+    // ── Chord info bar (main piano area) ─────────────────────────────────────
+    function updateInfoBar(chordData) {
+        const bar       = document.getElementById('chord-info-bar');
+        const nameEl    = document.getElementById('chord-info-name');
+        const formulaEl = document.getElementById('chord-info-formula');
+        const soundEl   = document.getElementById('chord-info-sound');
+
+        if (!bar) return;
+
+        if (!chordData) {
+            bar.classList.remove('has-chord');
+            if (nameEl)    nameEl.textContent    = '';
+            if (formulaEl) formulaEl.textContent = '';
+            if (soundEl)   soundEl.textContent   = '';
+            return;
+        }
+
+        bar.classList.add('has-chord');
+        if (nameEl)    nameEl.textContent    = chordData.name;
+        if (formulaEl) formulaEl.textContent = chordData.formula;
+        if (soundEl)   soundEl.textContent   = chordData.sound;
     }
 
+    // ── Chord detail rendering ────────────────────────────────────────────────
     function formatNoteBadges(midi) {
         return midi.map(m => `${ChordsDB.NOTE_NAMES[m % 12]}${Math.floor(m / 12) - 1}`).join(' ');
+    }
+
+    function renderChordMeta(chord) {
+        if (!chord.formula && !chord.sound && !chord.usage) return '';
+        return `
+            <div class="chord-meta">
+                ${chord.formula ? `<span class="chord-meta-formula">Công thức: ${chord.formula}</span>` : ''}
+                ${chord.sound   ? `<span class="chord-meta-sound">${chord.sound}</span>` : ''}
+                ${chord.usage   ? `<span class="chord-meta-usage">${chord.usage}</span>` : ''}
+            </div>
+        `;
     }
 
     function renderLevelTabs(chord) {
         return `
             <div class="level-tabs" role="tablist">
                 ${LEVELS.map(lvl => {
-                    const count = (chord.variations[lvl.id] || []).length;
+                    const count    = (chord.variations[lvl.id] || []).length;
                     const disabled = count === 0 ? ' disabled' : '';
-                    const active = lvl.id === selectedLevel ? ' active' : '';
+                    const active   = lvl.id === selectedLevel ? ' active' : '';
                     return `
                         <button type="button" class="level-tab${active}${disabled}"
                             role="tab" data-level="${lvl.id}"
@@ -221,7 +244,7 @@ const ChordUI = (() => {
     function renderPatternGrid() {
         const patterns = ChordPlayer.getPatterns();
         return `
-            <div class="pattern-grid pattern-grid--3" role="group" aria-label="Kiểu đánh">
+            <div class="pattern-grid" role="group" aria-label="Kiểu đánh">
                 ${patterns.map(p => `
                     <button type="button"
                         class="pattern-btn${p.id === selectedPattern ? ' active' : ''}"
@@ -233,7 +256,7 @@ const ChordUI = (() => {
     }
 
     function renderSpacingControl() {
-        const ms = ChordPlayer.getNoteSpacing();
+        const ms       = ChordPlayer.getNoteSpacing();
         const disabled = !ChordPlayer.isSequentialPattern(selectedPattern);
         return `
             <div class="spacing-control${disabled ? ' is-disabled' : ''}">
@@ -245,7 +268,7 @@ const ChordUI = (() => {
                     min="50" max="400" step="10" value="${ms}"
                     ${disabled ? 'disabled' : ''}
                     aria-label="Khoảng cách giữa các nốt khi rải">
-                <div class="spacing-presets" role="group" aria-label="Preset tốc độ rải">
+                <div class="spacing-presets" role="group">
                     <button type="button" class="spacing-preset" data-ms="80">Nhanh</button>
                     <button type="button" class="spacing-preset" data-ms="130">Vừa</button>
                     <button type="button" class="spacing-preset" data-ms="220">Chậm</button>
@@ -266,9 +289,9 @@ const ChordUI = (() => {
     function applyNoteSpacing(content, ms) {
         ChordPlayer.setNoteSpacing(ms);
         localStorage.setItem('piano-chord-spacing', String(ms));
-        const label = content.querySelector('.spacing-value');
+        const label  = content.querySelector('.spacing-value');
         const slider = content.querySelector('.note-spacing-slider');
-        if (label) label.textContent = `${ms} ms`;
+        if (label)  label.textContent  = `${ms} ms`;
         if (slider) slider.value = String(ms);
     }
 
@@ -277,14 +300,13 @@ const ChordUI = (() => {
         if (variations.length === 0) {
             return '<p class="variation-empty">Không có biến thể ở mức này</p>';
         }
-
         return `
             <div class="variation-plays">
                 ${variations.map((v, i) => `
                     <button type="button" class="variation-play-btn"
                         data-chord="${chordName}" data-type="${selectedLevel}" data-index="${i}"
-                        title="${v.name}">
-                        <span class="variation-play-name">${shortVariationName(v.name)}</span>
+                        title="${v.name} — ${v.difficulty}">
+                        <span class="variation-play-name">${v.name}</span>
                         <span class="variation-play-notes">${formatNoteBadges(v.midi)}</span>
                         <span class="variation-play-icon" aria-hidden="true">▶</span>
                     </button>
@@ -313,34 +335,38 @@ const ChordUI = (() => {
     }
 
     function refreshVariationPlays(chordName) {
-        const chord = ChordsDB.getChord(chordName);
+        const chord     = ChordsDB.getChord(chordName);
         const container = document.getElementById('variation-plays-container');
         if (!chord || !container) return;
         container.innerHTML = renderVariationPlays(chordName, chord);
     }
 
     function showChordDetails(chordName) {
-        currentChord = chordName;
+        currentChord    = chordName;
         selectedPattern = localStorage.getItem('piano-play-pattern') || selectedPattern;
-        const chord = ChordsDB.getChord(chordName);
+        const chord     = ChordsDB.getChord(chordName);
         if (!chord) return;
+
+        // Update the floating info bar in the main piano area
+        updateInfoBar(chord);
 
         const levelsWithItems = LEVELS.filter(l => (chord.variations[l.id] || []).length > 0);
         if (levelsWithItems.length && !levelsWithItems.find(l => l.id === selectedLevel)) {
             selectedLevel = levelsWithItems[0].id;
         }
 
-        const panel = document.getElementById('chord-detail-panel');
+        const panel   = document.getElementById('chord-detail-panel');
         const content = document.getElementById('chord-details-content');
         const titleEl = panel?.querySelector('.chord-detail-panel-title');
 
         if (titleEl) titleEl.textContent = chord.name;
 
         content.innerHTML = `
+            ${renderChordMeta(chord)}
             ${renderPlayZone(chordName, chord)}
 
             <details class="chord-info-details">
-                <summary>Mô tả & cách bấm</summary>
+                <summary>Mô tả & tiến hành</summary>
                 <div class="chord-detail-header">
                     <p class="chord-aliases">${chord.aliases.join(' / ')}</p>
                     <p class="chord-description">${chord.description}</p>
@@ -348,6 +374,7 @@ const ChordUI = (() => {
                 <div class="chord-voicings">
                     <ul>
                         ${chord.voicings.map(v => `<li>${v}</li>`).join('')}
+                        ${chord.progressions ? `<li>Ví dụ: ${chord.progressions.split('|')[0].trim()}</li>` : ''}
                     </ul>
                 </div>
             </details>
@@ -358,6 +385,10 @@ const ChordUI = (() => {
 
         const body = panel.querySelector('.chord-detail-panel-body');
         if (body) body.scrollTop = 0;
+
+        // Update keyboard highlight
+        const midi = ChordsDB.getMidiNotes(chordName, 'basic', 0);
+        updateKeyboardHighlight(midi);
     }
 
     function closeChordPanel() {
@@ -370,15 +401,16 @@ const ChordUI = (() => {
             el.classList.remove('selected');
         });
         ChordPlayer.stopChord();
+        updateInfoBar(null);
+        updateKeyboardHighlight([]);
     }
 
+    // ── Panel event binding ───────────────────────────────────────────────────
     function setupChordPanel() {
         const closeBtn = document.querySelector('.chord-detail-panel-close');
-        const content = document.getElementById('chord-details-content');
+        const content  = document.getElementById('chord-details-content');
 
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeChordPanel);
-        }
+        if (closeBtn) closeBtn.addEventListener('click', closeChordPanel);
 
         if (content) {
             content.addEventListener('input', e => {
@@ -436,6 +468,9 @@ const ChordUI = (() => {
         btnElement.classList.add('playing');
         btnElement.disabled = true;
         if (icon) icon.textContent = '⏸';
+
+        // Highlight the keys for this variation
+        updateKeyboardHighlight(midiNotes);
 
         ChordPlayer.playWithPattern(midiNotes, selectedPattern);
 

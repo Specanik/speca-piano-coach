@@ -41,7 +41,15 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // Setup Chord UI
-    ChordUI.init();
+    try {
+        ChordUI.init();
+    } catch(e) {
+        console.error('ChordUI.init failed:', e);
+        var errDiv = document.createElement('div');
+        errDiv.style.cssText = 'position:fixed;top:40px;left:0;right:0;background:orange;color:#000;padding:12px;z-index:9999;font:14px monospace;white-space:pre-wrap;';
+        errDiv.textContent = 'ChordUI.init ERROR: ' + e.message + '\n' + e.stack;
+        document.body.appendChild(errDiv);
+    }
 
     // Connect ChordPlayer to keyboard visualization (sync on/off per note)
     let chordVisNotes = new Set();
@@ -59,5 +67,13 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initial render
-    applyLayout(savedLayout);
+    try {
+        applyLayout(savedLayout);
+    } catch(e) {
+        console.error('applyLayout failed:', e);
+        var errDiv2 = document.createElement('div');
+        errDiv2.style.cssText = 'position:fixed;top:90px;left:0;right:0;background:purple;color:#fff;padding:12px;z-index:9999;font:14px monospace;white-space:pre-wrap;';
+        errDiv2.textContent = 'applyLayout ERROR: ' + e.message + '\n' + e.stack;
+        document.body.appendChild(errDiv2);
+    }
 });

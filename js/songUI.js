@@ -237,7 +237,7 @@ Từng kỳ [Am]thi nối tiếp [Em]nhau, tuổi thơ [F]con trôi qua rất [C
                     ${getLevelTabsHtml()}
                     ${getVariationPickerHtml()}
                     <span class="play-zone-label">Kiểu đánh</span>
-                    <div class="pattern-grid pattern-grid--3 song-pattern-grid">${getPatternGridHtml(selectedPattern)}</div>
+                    <div class="pattern-grid song-pattern-grid">${getPatternGridHtml(selectedPattern)}</div>
                     ${getSpacingHtml()}
                     ${getTempoHtml()}
                 </div>
