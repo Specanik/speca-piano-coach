@@ -2,17 +2,23 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Piano</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div id="app" class="app-layout">
 
+        <!-- ── Backdrop (mobile only) ── -->
+        <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
         <!-- ── Left: chord sidebar ── -->
         <aside class="chord-sidebar" aria-label="Hợp âm">
             <div class="chord-sidebar-top">
-                <h2 class="chord-sidebar-heading">Hợp âm</h2>
+                <div class="chord-sidebar-heading-row">
+                    <h2 class="chord-sidebar-heading">Hợp âm</h2>
+                    <button type="button" id="sidebar-close-btn" class="sidebar-close-btn" aria-label="Đóng">✕</button>
+                </div>
 
                 <div class="chord-sidebar-tabs" role="tablist">
                     <button type="button" class="chord-tab-btn active" data-tab="browse"  role="tab" aria-selected="true">Duyệt</button>
@@ -128,6 +134,9 @@
 
             <!-- Compact top bar: title + controls in one row -->
             <header class="header">
+                <button type="button" id="sidebar-toggle-btn" class="sidebar-toggle-btn" aria-label="Mở bảng hợp âm">
+                    ☰ <span class="sidebar-toggle-label">Hợp âm</span>
+                </button>
                 <h1 class="title">PIANO</h1>
                 <div class="controls">
                     <div class="control-row">

@@ -17,10 +17,22 @@ function applyLayout(layoutKey) {
     Visualizer.init(canvas, noteMap);
 }
 
+function openSidebar() {
+    document.getElementById('app').classList.add('sidebar-open');
+}
+function closeSidebar() {
+    document.getElementById('app').classList.remove('sidebar-open');
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     // Restore saved preferences
     setTheme(localStorage.getItem('piano-theme')   || 'classic');
     const savedLayout = localStorage.getItem('piano-layout') || '36';
+
+    // Mobile sidebar controls
+    document.getElementById('sidebar-toggle-btn')?.addEventListener('click', openSidebar);
+    document.getElementById('sidebar-close-btn')?.addEventListener('click', closeSidebar);
+    document.getElementById('sidebar-backdrop')?.addEventListener('click', closeSidebar);
 
     // Wire up controls
     document.querySelectorAll('.theme-btn').forEach(btn => {

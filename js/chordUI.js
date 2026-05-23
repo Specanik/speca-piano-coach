@@ -78,6 +78,8 @@ const ChordUI = (() => {
     function selectChord(chordKey) {
         SongUI.stopIfPlaying();
         ProgressionPlayer.stopAll();
+        // On mobile: keep sidebar open so user can see chord detail inside it
+        // (No auto-close — chord detail panel shows within the sidebar)
         selectedLevel   = 'basic';
         selectedPattern = localStorage.getItem('piano-play-pattern') || selectedPattern;
         showChordDetails(chordKey);
