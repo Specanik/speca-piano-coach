@@ -266,10 +266,15 @@ const AppShell = (() => {
         Router.registerView('learn',   () => LearnView.showList());
         Router.registerView('profile', () => ProfileView.render());
         Router.registerView('practice', () => {
-            // ChordUI init (only once)
             try { ChordUI.init(); } catch(e) { console.warn('ChordUI init:', e); }
             try { SongUI.init(); } catch(e) { }
             try { ProgressionPlayer.init(); } catch(e) { }
+            // Init songs view in songs tab
+            const songsTab = document.getElementById('chord-tab-song');
+            if (songsTab && typeof SongsView !== 'undefined') {
+                songsTab.id = 'songs-view-container';
+                SongsView.render('songs-view-container');
+            }
         });
     }
 

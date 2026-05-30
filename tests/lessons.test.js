@@ -4,12 +4,12 @@ import { loadIife } from './helpers/evalIife.js'
 const LessonsData = loadIife('data/lessons.js', 'LessonsData')
 
 describe('LessonsData — structure', () => {
-  it('has exactly 10 lessons', () => {
-    expect(LessonsData.getCount()).toBe(10)
+  it('has at least 10 lessons', () => {
+    expect(LessonsData.getCount()).toBeGreaterThanOrEqual(10)
   })
 
-  it('getAll() returns 10 lessons', () => {
-    expect(LessonsData.getAll()).toHaveLength(10)
+  it('getAll() returns at least 10 lessons', () => {
+    expect(LessonsData.getAll().length).toBeGreaterThanOrEqual(10)
   })
 
   it('first lesson is lesson-01', () => {

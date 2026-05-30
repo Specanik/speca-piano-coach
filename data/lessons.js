@@ -33,7 +33,7 @@ const LessonsData = (() => {
 
     // ── MIDI note constants ────────────────────────────────────────────────
     const C4=60, D4=62, E4=64, F4=65, G4=67, A4=69, B4=71, C5=72;
-    const Cs4=61, Ds4=63, Fs4=66, Gs4=68, As4=70;
+    const Ds4=63, Fs4=66;
     // Octave 3
     const C3=48, D3=50, E3=52, F3=53, G3=55, A3=57, B3=59;
 
@@ -615,6 +615,598 @@ const LessonsData = (() => {
                         text: 'Trong vòng C – Am – F – G, hợp âm nào mang chức năng "Chủ âm (Tonic)"?',
                         options: ['Am', 'F', 'C', 'G'],
                         correct: 2
+                    }
+                }
+            ]
+        },
+
+        // ══════════════════════════════════════════════════════════
+        //  INTERMEDIATE (Bài 11-20)
+        // ══════════════════════════════════════════════════════════
+
+        {
+            id: 'lesson-11',
+            title: 'Giọng La thứ tự nhiên (A Natural Minor)',
+            description: 'Gam thứ — cảm xúc buồn và sâu lắng. Nền tảng của hàng nghìn bài nhạc buồn.',
+            thumbnail: '🌙',
+            xp: 120,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Gam La thứ tự nhiên',
+                    content: `
+                        <h3>A Natural Minor: A – B – C – D – E – F – G – A</h3>
+                        <p>Đây là gam thứ phổ biến nhất, dùng trong pop, rock, ballad buồn.
+                        So với C Major: toàn bộ nốt giống nhau nhưng bắt đầu từ <strong>A</strong>.</p>
+                        <h3>Công thức khoảng cách</h3>
+                        <p>T – ST – T – T – ST – T – T (T=tone, ST=semitone)</p>
+                        <h3>Cảm xúc</h3>
+                        <p>Buồn, u hoài, trầm tư — khác hoàn toàn với C Major (sáng, vui).</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Nhận biết 8 nốt Am',
+                    content: 'Nhấn lần lượt từng nốt gam Am: A – B – C – D – E – F – G – A',
+                    notes: [A3, B3, C4, D4, E4, F4, G4, A4],
+                    hint: 'Bắt đầu từ A3 (A dưới C4). Tất cả đều là phím trắng!'
+                },
+                {
+                    type: 'play',
+                    title: 'Chạy gam Am lên và xuống',
+                    content: 'Chơi gam Am từ A3 lên A4 rồi xuống lại.',
+                    sequence: [
+                        { midi: A3, label: 'A',  durationMs: 500 },
+                        { midi: B3, label: 'B',  durationMs: 500 },
+                        { midi: C4, label: 'C',  durationMs: 500 },
+                        { midi: D4, label: 'D',  durationMs: 500 },
+                        { midi: E4, label: 'E',  durationMs: 500 },
+                        { midi: F4, label: 'F',  durationMs: 500 },
+                        { midi: G4, label: 'G',  durationMs: 500 },
+                        { midi: A4, label: 'A',  durationMs: 700 },
+                    ],
+                    bpm: 72
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra gam Am',
+                    question: {
+                        text: 'Gam A Natural Minor và C Major có điểm gì chung?',
+                        options: [
+                            'Cùng bắt đầu từ nốt C',
+                            'Cùng dùng các phím trắng (cùng nốt, khác bắt đầu)',
+                            'Cùng cảm xúc vui vẻ',
+                            'Không có điểm gì chung'
+                        ],
+                        correct: 1
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-12',
+            title: 'Pentatonic — Gam 5 nốt huyền thoại',
+            description: 'Gam pentatonic minor: đơn giản nhất để tạo melody hay ngay lập tức.',
+            thumbnail: '⭐',
+            xp: 130,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Pentatonic Minor',
+                    content: `
+                        <h3>Pentatonic Minor: A – C – D – E – G</h3>
+                        <p>Chỉ 5 nốt nhưng tạo ra âm thanh "nghe hay ngay" — dùng trong blues, rock, pop Việt.
+                        Bí quyết: bất kỳ 2 nốt nào trong gam đều "hòa" với nhau!</p>
+                        <h3>Tại sao dễ?</h3>
+                        <p>Không có nốt "căng thẳng" — mọi tổ hợp đều nghe ổn.
+                        Đây là lý do guitarists dùng pentatonic để improv.</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Luyện 5 nốt Pentatonic',
+                    content: 'Nhấn lần lượt 5 nốt: A – C – D – E – G (bỏ qua B và F)',
+                    notes: [A3, C4, D4, E4, G4],
+                    hint: 'Nhớ: BỎ QUA B và F. Chỉ nhấn A, C, D, E, G.'
+                },
+                {
+                    type: 'play',
+                    title: 'Melody pentatonic đơn giản',
+                    content: 'Chơi chuỗi nốt này — đây là phong cách blues!',
+                    sequence: [
+                        { midi: A3,  label: 'A', durationMs: 400 },
+                        { midi: C4,  label: 'C', durationMs: 400 },
+                        { midi: D4,  label: 'D', durationMs: 400 },
+                        { midi: E4,  label: 'E', durationMs: 600 },
+                        { midi: D4,  label: 'D', durationMs: 400 },
+                        { midi: C4,  label: 'C', durationMs: 400 },
+                        { midi: A3,  label: 'A', durationMs: 700 },
+                    ],
+                    bpm: 80
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra pentatonic',
+                    question: {
+                        text: 'Pentatonic Minor (key Am) có bao nhiêu nốt?',
+                        options: ['4 nốt', '5 nốt', '7 nốt', '8 nốt'],
+                        correct: 1
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-13',
+            title: 'Twinkle Twinkle Little Star',
+            description: 'Bài đầu tiên chơi melody đơn giản và quen thuộc.',
+            thumbnail: '⭐',
+            xp: 140,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Đọc melody từ tên nốt',
+                    content: `
+                        <h3>Twinkle Twinkle Little Star</h3>
+                        <p>Một trong những bài đầu tiên mọi pianist học.
+                        Melody hoàn toàn dùng gam C trưởng — không có phím đen!</p>
+                        <h3>Cấu trúc</h3>
+                        <p>C C G G A A G — (nghỉ) — F F E E D D C</p>
+                        <p>Mỗi nốt giữ đúng 1 phách. Nhịp độ: từ tốn, ~72 BPM.</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Luyện từng cụm 7 nốt',
+                    content: 'Nhấn đúng 7 nốt đầu: C – C – G – G – A – A – G',
+                    notes: [C4, C4, G4, G4, A4, A4, G4],
+                    hint: 'Ngón tay: 1(C) – 1(C) – 5(G) – 5(G) – dịch lên – A – A – G'
+                },
+                {
+                    type: 'play',
+                    title: 'Twinkle Twinkle đoạn 1',
+                    content: 'Chơi đoạn đầu theo nhịp.',
+                    sequence: [
+                        { midi: C4, label: 'C', durationMs: 500 },
+                        { midi: C4, label: 'C', durationMs: 500 },
+                        { midi: G4, label: 'G', durationMs: 500 },
+                        { midi: G4, label: 'G', durationMs: 500 },
+                        { midi: A4, label: 'A', durationMs: 500 },
+                        { midi: A4, label: 'A', durationMs: 500 },
+                        { midi: G4, label: 'G', durationMs: 700 },
+                        { midi: F4, label: 'F', durationMs: 500 },
+                        { midi: F4, label: 'F', durationMs: 500 },
+                        { midi: E4, label: 'E', durationMs: 500 },
+                        { midi: E4, label: 'E', durationMs: 500 },
+                        { midi: D4, label: 'D', durationMs: 500 },
+                        { midi: D4, label: 'D', durationMs: 500 },
+                        { midi: C4, label: 'C', durationMs: 800 },
+                    ],
+                    bpm: 80
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra bài đầu tiên',
+                    question: {
+                        text: 'Trong "Twinkle Twinkle", sau 2 nốt C C là nốt gì?',
+                        options: ['D D', 'E E', 'F F', 'G G'],
+                        correct: 3
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-14',
+            title: 'Hợp âm D trưởng & E thứ',
+            description: 'Hai hợp âm mới để hoàn thiện giọng G trưởng và D trưởng.',
+            thumbnail: '🎸',
+            xp: 130,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'D Major và Em',
+                    content: `
+                        <h3>D Major: D – F# – A</h3>
+                        <p>Chú ý: F# là phím ĐEN! Đây là hợp âm đầu tiên có phím đen.
+                        Cảm xúc: sáng, năng lượng, tự tin.</p>
+                        <h3>E Minor: E – G – B</h3>
+                        <p>Hợp âm thứ — buồn, u hoài. Dùng nhiều trong nhạc pop/rock.</p>
+                        <h3>Vòng G Major</h3>
+                        <p>G – D – Em – C: một trong những vòng phổ biến nhất thế giới!</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Luyện D Major (có phím đen)',
+                    content: 'Nhấn D4 – F#4 – A4. F#4 là phím ĐEN giữa F và G.',
+                    notes: [D4, Fs4, A4],
+                    hint: 'F#4 = phím đen nằm ngay bên phải F4.'
+                },
+                {
+                    type: 'play',
+                    title: 'Vòng G – D – Em – C',
+                    content: 'Chơi vòng 4 hợp âm mạnh nhất của nhạc pop.',
+                    sequence: [
+                        { midi: [G3, B3, D4], label: 'G',  durationMs: 700 },
+                        { midi: [D4, Fs4, A4], label: 'D',  durationMs: 700 },
+                        { midi: [E4, G4, B4], label: 'Em', durationMs: 700 },
+                        { midi: [C4, E4, G4], label: 'C',  durationMs: 700 },
+                    ],
+                    bpm: 65
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra D Major',
+                    question: {
+                        text: 'D Major gồm nốt nào? (Chú ý phím đen)',
+                        options: ['D – F – A', 'D – F# – A', 'D – E – A', 'D – G – A'],
+                        correct: 1
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-15',
+            title: 'Nhịp 3/4 — Điệu Waltz',
+            description: 'Nhịp của vũ điệu Waltz: 1-2-3, 1-2-3. Nghe ngay là nhận ra!',
+            thumbnail: '💃',
+            xp: 135,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Nhịp 3/4',
+                    content: `
+                        <h3>3 phách mỗi ô nhịp</h3>
+                        <p>Khác với 4/4, nhịp 3/4 có <strong>3 phách</strong>: mạnh – nhẹ – nhẹ.
+                        Cảm giác như đang xoay tròn, nhẹ nhàng, lãng mạn.</p>
+                        <h3>Kiểu đệm Waltz cơ bản</h3>
+                        <p>Tay trái: BASS (phách 1) – CHORD (phách 2) – CHORD (phách 3)</p>
+                        <h3>Bài nhạc nổi tiếng</h3>
+                        <p>Happy Birthday, My Heart Will Go On (phần intro), nhiều bản nhạc cổ điển.</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Đếm nhịp 1-2-3',
+                    content: 'Nhấn C4 đúng vào phách 1 (mạnh), D4 vào phách 2, E4 vào phách 3. Lặp lại.',
+                    notes: [C4, D4, E4],
+                    hint: 'Đếm: MỘT – hai – ba, MỘT – hai – ba...'
+                },
+                {
+                    type: 'play',
+                    title: 'Melody 3/4 đơn giản',
+                    content: 'Chơi pattern waltz với gam C trưởng.',
+                    sequence: [
+                        { midi: C4, label: '1', durationMs: 700 },
+                        { midi: E4, label: '2', durationMs: 500 },
+                        { midi: G4, label: '3', durationMs: 500 },
+                        { midi: E4, label: '1', durationMs: 700 },
+                        { midi: C4, label: '2', durationMs: 500 },
+                        { midi: E4, label: '3', durationMs: 500 },
+                        { midi: G4, label: '1', durationMs: 700 },
+                        { midi: E4, label: '2', durationMs: 500 },
+                        { midi: C5, label: '3', durationMs: 700 },
+                    ],
+                    bpm: 90
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra nhịp 3/4',
+                    question: {
+                        text: 'Nhịp 3/4 khác nhịp 4/4 ở điểm gì chính?',
+                        options: [
+                            '3/4 nhanh hơn 4/4',
+                            '3/4 có 3 phách mỗi ô nhịp, 4/4 có 4 phách',
+                            '3/4 chỉ dùng cho nhạc buồn',
+                            '3/4 không có phách mạnh'
+                        ],
+                        correct: 1
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-16',
+            title: 'Lý thuyết: Cung và Quãng',
+            description: 'Hiểu cách tính khoảng cách giữa các nốt — nền tảng để tự tạo hợp âm.',
+            thumbnail: '📐',
+            xp: 150,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Quãng là gì?',
+                    content: `
+                        <h3>Quãng (Interval)</h3>
+                        <p>Quãng = khoảng cách giữa 2 nốt, tính bằng số phím (semitone).</p>
+                        <table>
+                            <thead><tr><th>Quãng</th><th>Semitones</th><th>Ví dụ</th></tr></thead>
+                            <tbody>
+                                <tr><td>Quãng 2 thứ</td><td>1</td><td>C → C#</td></tr>
+                                <tr><td>Quãng 2 trưởng</td><td>2</td><td>C → D</td></tr>
+                                <tr><td>Quãng 3 thứ</td><td>3</td><td>C → Eb</td></tr>
+                                <tr><td>Quãng 3 trưởng</td><td>4</td><td>C → E</td></tr>
+                                <tr><td>Quãng 5 đúng</td><td>7</td><td>C → G</td></tr>
+                                <tr><td>Quãng 8 (octave)</td><td>12</td><td>C → C</td></tr>
+                            </tbody>
+                        </table>
+                        <h3>Ứng dụng</h3>
+                        <p>Major chord = nốt gốc + quãng 3 trưởng (4 phím) + quãng 5 đúng (7 phím)</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Nghe quãng 3 trưởng vs thứ',
+                    content: 'Nhấn C4 rồi nhấn E4 (quãng 3 trưởng = 4 phím). Nghe sự khác biệt.',
+                    notes: [C4, E4],
+                    hint: 'Quãng 3 trưởng (C→E) nghe "sáng". Quãng 3 thứ (C→Eb) nghe "buồn".'
+                },
+                {
+                    type: 'play',
+                    title: 'Nhận dạng quãng qua tai',
+                    content: 'Chơi các quãng khác nhau từ C4.',
+                    sequence: [
+                        { midi: C4,  label: 'C',  durationMs: 400 },
+                        { midi: E4,  label: '3M', durationMs: 600 },
+                        { midi: C4,  label: 'C',  durationMs: 400 },
+                        { midi: Ds4, label: '3m', durationMs: 600 },
+                        { midi: C4,  label: 'C',  durationMs: 400 },
+                        { midi: G4,  label: '5',  durationMs: 700 },
+                    ],
+                    bpm: 70
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra quãng',
+                    question: {
+                        text: 'Từ C đến G là quãng bao nhiêu semitone?',
+                        options: ['5 semitone', '6 semitone', '7 semitone', '8 semitone'],
+                        correct: 2
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-17',
+            title: 'Happy Birthday To You',
+            description: 'Bài nhạc nổi tiếng nhất thế giới — melody tay phải đầy đủ.',
+            thumbnail: '🎂',
+            xp: 160,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Phân tích Happy Birthday',
+                    content: `
+                        <h3>Happy Birthday — nhịp 3/4</h3>
+                        <p>Bài này dùng nhịp 3/4 (đã học ở bài 15).
+                        Melody key C Major, không có phím đen.</p>
+                        <h3>Cấu trúc melody</h3>
+                        <p>Câu 1: C C D C F E<br>
+                        Câu 2: C C D C G F<br>
+                        Câu 3: C C C5 A4 F E D<br>
+                        Câu 4: Bb Bb A F G F</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Luyện câu 1 + 2',
+                    content: 'Nhấn câu đầu: C – C – D – C – F – E',
+                    notes: [C4, C4, D4, C4, F4, E4],
+                    hint: 'Nhịp 3/4 — đếm: 1-và 2 3 | 1 2 3...'
+                },
+                {
+                    type: 'play',
+                    title: 'Happy Birthday — 2 câu đầu',
+                    content: 'Chơi 2 câu đầu của Happy Birthday.',
+                    sequence: [
+                        { midi: C4, label: 'C', durationMs: 350 },
+                        { midi: C4, label: 'C', durationMs: 350 },
+                        { midi: D4, label: 'D', durationMs: 550 },
+                        { midi: C4, label: 'C', durationMs: 550 },
+                        { midi: F4, label: 'F', durationMs: 550 },
+                        { midi: E4, label: 'E', durationMs: 750 },
+                        { midi: C4, label: 'C', durationMs: 350 },
+                        { midi: C4, label: 'C', durationMs: 350 },
+                        { midi: D4, label: 'D', durationMs: 550 },
+                        { midi: C4, label: 'C', durationMs: 550 },
+                        { midi: G4, label: 'G', durationMs: 550 },
+                        { midi: F4, label: 'F', durationMs: 800 },
+                    ],
+                    bpm: 90
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra Happy Birthday',
+                    question: {
+                        text: 'Happy Birthday dùng nhịp gì?',
+                        options: ['2/4', '3/4', '4/4', '6/8'],
+                        correct: 1
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-18',
+            title: 'Tay trái: Bass Notes cơ bản',
+            description: 'Bắt đầu phối hợp hai tay — tay trái đánh bass, tay phải đánh melody.',
+            thumbnail: '🤲',
+            xp: 170,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Vai trò của tay trái',
+                    content: `
+                        <h3>Tay trái = nền tảng âm nhạc</h3>
+                        <p>Trong piano, tay trái thường đánh:
+                        <ul>
+                            <li><strong>Bass notes:</strong> nốt thấp đặt nền hòa âm</li>
+                            <li><strong>Chords:</strong> hợp âm đệm theo nhịp</li>
+                            <li><strong>Arpeggio:</strong> rải hợp âm</li>
+                        </ul></p>
+                        <h3>Bắt đầu đơn giản</h3>
+                        <p>Tay trái nhấn nốt gốc của hợp âm (Bass note) trong khi tay phải đánh melody.
+                        C chord → tay trái nhấn C2 hoặc C3.</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Luyện bass notes tay trái',
+                    content: 'Nhấn các nốt bass cho vòng C-Am-F-G (tay trái): C3 – A3 – F3 – G3',
+                    notes: [C3, A3, F3, G3],
+                    hint: 'Tay trái ở octave thấp hơn tay phải. C3 nằm dưới C4.'
+                },
+                {
+                    type: 'play',
+                    title: 'Bass line vòng C-Am-F-G',
+                    content: 'Chơi bass notes tay trái theo vòng quen thuộc.',
+                    sequence: [
+                        { midi: C3, label: 'C', durationMs: 700 },
+                        { midi: A3, label: 'A', durationMs: 700 },
+                        { midi: F3, label: 'F', durationMs: 700 },
+                        { midi: G3, label: 'G', durationMs: 700 },
+                        { midi: C3, label: 'C', durationMs: 700 },
+                        { midi: A3, label: 'A', durationMs: 700 },
+                        { midi: F3, label: 'F', durationMs: 700 },
+                        { midi: G3, label: 'G', durationMs: 900 },
+                    ],
+                    bpm: 70
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra tay trái',
+                    question: {
+                        text: 'Bass note của hợp âm Am là nốt gì?',
+                        options: ['C', 'E', 'A', 'G'],
+                        correct: 2
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-19',
+            title: 'Hợp âm 7 — Màu sắc nâng cao',
+            description: 'Hợp âm 4 nốt: thêm bậc 7 để tạo âm thanh jazz, soul, R&B.',
+            thumbnail: '🎷',
+            xp: 160,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Hợp âm 7 (Seventh Chords)',
+                    content: `
+                        <h3>Tại sao hợp âm 7?</h3>
+                        <p>Thêm 1 nốt vào hợp âm 3 → âm thanh "màu sắc" hơn, jazz hơn, ít "plain".</p>
+                        <h3>Các loại quan trọng</h3>
+                        <table>
+                            <thead><tr><th>Loại</th><th>Công thức</th><th>Ví dụ</th></tr></thead>
+                            <tbody>
+                                <tr><td>Major 7</td><td>1-3-5-7</td><td>Cmaj7: C-E-G-B</td></tr>
+                                <tr><td>Minor 7</td><td>1-♭3-5-♭7</td><td>Am7: A-C-E-G</td></tr>
+                                <tr><td>Dominant 7</td><td>1-3-5-♭7</td><td>G7: G-B-D-F</td></tr>
+                            </tbody>
+                        </table>
+                        <h3>Dùng khi nào?</h3>
+                        <p>Cmaj7 thay C, Am7 thay Am → nhạc nghe "ngọt" và "smooth" hơn.</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Luyện Cmaj7',
+                    content: 'Nhấn đồng thời C4 – E4 – G4 – B4 (thêm nốt B vào C Major)',
+                    notes: [C4, E4, G4, B4],
+                    hint: 'B4 = nốt ngay bên trái C5. Ngón 1-2-3-5 tay phải.'
+                },
+                {
+                    type: 'play',
+                    title: 'Vòng jazz cơ bản với chord 7',
+                    content: 'Cmaj7 – Am7 – Fmaj7 – G7: vòng pop/jazz phổ biến.',
+                    sequence: [
+                        { midi: [C4, E4, G4, B4],  label: 'Cmaj7', durationMs: 800 },
+                        { midi: [A3, C4, E4, G4],  label: 'Am7',   durationMs: 800 },
+                        { midi: [F3, A3, C4, E4],  label: 'Fmaj7', durationMs: 800 },
+                        { midi: [G3, B3, D4, F4],  label: 'G7',    durationMs: 800 },
+                    ],
+                    bpm: 60
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra chord 7',
+                    question: {
+                        text: 'Cmaj7 gồm những nốt nào?',
+                        options: ['C – E – G', 'C – E – G – B', 'C – E – G – Bb', 'C – D – G – B'],
+                        correct: 1
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-20',
+            title: 'Bài kiểm tra Trung cấp',
+            description: 'Ôn tập và chơi bản nhạc ngắn kết hợp tay trái + tay phải.',
+            thumbnail: '🎓',
+            xp: 200,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Ôn tập bài học 11-19',
+                    content: `
+                        <h3>Những gì bạn đã học (Trung cấp)</h3>
+                        <ul>
+                            <li>✅ Gam Am Natural Minor + Pentatonic</li>
+                            <li>✅ Bài thực chiến: Twinkle, Happy Birthday</li>
+                            <li>✅ Hợp âm D, Em — vòng G-D-Em-C</li>
+                            <li>✅ Nhịp 3/4 (Waltz)</li>
+                            <li>✅ Quãng âm nhạc</li>
+                            <li>✅ Tay trái: bass notes</li>
+                            <li>✅ Hợp âm 7 (maj7, m7, dom7)</li>
+                        </ul>
+                        <h3>Bài kiểm tra</h3>
+                        <p>Chơi đoạn nhạc kết hợp tất cả kỹ năng trên.
+                        Bạn đã sẵn sàng cho cấp Nâng cao!</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Ôn nhanh chord 7',
+                    content: 'Nhấn lần lượt: Cmaj7 (C-E-G-B) và Am7 (A-C-E-G)',
+                    notes: [C4, E4, G4, B4],
+                    hint: 'Đây là 2 chord jazz quan trọng nhất.'
+                },
+                {
+                    type: 'play',
+                    title: 'Finale: Melody + bass kết hợp',
+                    content: 'Chơi melody gam C trưởng với bass note tay trái.',
+                    sequence: [
+                        { midi: C4,  label: 'C',  durationMs: 500 },
+                        { midi: E4,  label: 'E',  durationMs: 500 },
+                        { midi: G4,  label: 'G',  durationMs: 500 },
+                        { midi: A4,  label: 'A',  durationMs: 500 },
+                        { midi: G4,  label: 'G',  durationMs: 700 },
+                        { midi: F4,  label: 'F',  durationMs: 500 },
+                        { midi: E4,  label: 'E',  durationMs: 500 },
+                        { midi: D4,  label: 'D',  durationMs: 500 },
+                        { midi: C4,  label: 'C',  durationMs: 800 },
+                    ],
+                    bpm: 80
+                },
+                {
+                    type: 'quiz',
+                    title: 'Câu hỏi tổng hợp',
+                    question: {
+                        text: 'Vòng hòa âm nào có tất cả 4 hợp âm: G – D – Em – C?',
+                        options: [
+                            'Giọng C Major, bậc I-IV-vi-V',
+                            'Giọng G Major, bậc I-V-vi-IV',
+                            'Giọng Am Natural Minor',
+                            'Không có tên cụ thể'
+                        ],
+                        correct: 1
                     }
                 }
             ]
