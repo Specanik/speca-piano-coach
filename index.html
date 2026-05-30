@@ -3,143 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Piano</title>
+    <title>Piano Coach</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/lesson.css">
+    <link rel="stylesheet" href="css/app-shell.css">
+    <link rel="stylesheet" href="css/learn-view.css">
 </head>
 <body>
-    <div id="app" class="app-layout">
 
-        <!-- ── Backdrop (mobile only) ── -->
-        <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+<!-- ── Onboarding (shown once for new users) ── -->
+<div id="onboarding-overlay" class="onboarding-overlay hidden">
+    <div class="onboarding-slide active" id="ob-slide-0">
+        <div class="onboarding-emoji">🎹</div>
+        <h2 class="onboarding-title">Chào mừng đến với<br>Piano Coach</h2>
+        <p class="onboarding-text">Học piano từ cơ bản đến nâng cao — không cần kinh nghiệm, không cần đọc nhạc.</p>
+        <div class="onboarding-dots">
+            <div class="onboarding-dot active"></div>
+            <div class="onboarding-dot"></div>
+            <div class="onboarding-dot"></div>
+        </div>
+        <button class="onboarding-btn" id="ob-next-0">Bắt đầu →</button>
+        <button class="onboarding-skip" id="ob-skip">Bỏ qua</button>
+    </div>
+    <div class="onboarding-slide" id="ob-slide-1">
+        <div class="onboarding-emoji">🎵</div>
+        <h2 class="onboarding-title">Học theo bài nhạc<br>bạn yêu thích</h2>
+        <p class="onboarding-text">Mỗi bài học chia thành 4 bước nhỏ: Lý thuyết → Luyện ngón → Ghép nhạc → Kiểm tra.</p>
+        <div class="onboarding-dots">
+            <div class="onboarding-dot"></div>
+            <div class="onboarding-dot active"></div>
+            <div class="onboarding-dot"></div>
+        </div>
+        <button class="onboarding-btn" id="ob-next-1">Tiếp theo →</button>
+    </div>
+    <div class="onboarding-slide" id="ob-slide-2">
+        <div class="onboarding-emoji">🎤</div>
+        <h2 class="onboarding-title">Phản hồi ngay<br>khi bạn chơi</h2>
+        <p class="onboarding-text">Kết nối bàn phím MIDI hoặc dùng microphone — ứng dụng nghe và hướng dẫn bạn từng nốt.</p>
+        <div class="onboarding-dots">
+            <div class="onboarding-dot"></div>
+            <div class="onboarding-dot"></div>
+            <div class="onboarding-dot active"></div>
+        </div>
+        <button class="onboarding-btn" id="ob-next-2">🎹 Bắt đầu học ngay</button>
+    </div>
+</div>
 
-        <!-- ── Left: chord sidebar ── -->
-        <aside class="chord-sidebar" aria-label="Hợp âm">
-            <div class="chord-sidebar-top">
-                <div class="chord-sidebar-heading-row">
-                    <h2 class="chord-sidebar-heading">Hợp âm</h2>
-                    <button type="button" id="sidebar-close-btn" class="sidebar-close-btn" aria-label="Đóng">✕</button>
-                </div>
+<!-- ── App Shell ── -->
+<div id="app" class="app-layout">
 
-                <div class="chord-sidebar-tabs" role="tablist">
-                    <button type="button" class="chord-tab-btn active" data-tab="browse"  role="tab" aria-selected="true">Duyệt</button>
-                    <button type="button" class="chord-tab-btn"        data-tab="search"  role="tab" aria-selected="false">Tìm</button>
-                    <button type="button" class="chord-tab-btn"        data-tab="song"    role="tab" aria-selected="false">Đệm</button>
-                    <button type="button" class="chord-tab-btn"        data-tab="theory"  role="tab" aria-selected="false">Lý thuyết</button>
-                </div>
-            </div>
+    <!-- Top bar -->
+    <header class="top-bar">
+        <div class="top-bar-logo" id="logo-btn">
+            <span class="top-bar-logo-icon">🎹</span>
+            <span class="top-bar-logo-text">Piano Coach</span>
+        </div>
+        <div class="top-bar-spacer"></div>
+        <div class="top-bar-stats" id="top-bar-stats">
+            <div class="stat-pill stat-pill-streak" id="stat-streak" title="Chuỗi ngày liên tiếp">🔥 0</div>
+            <div class="stat-pill stat-pill-xp"     id="stat-xp"     title="Điểm kinh nghiệm">⚡ 0</div>
+        </div>
+    </header>
 
-            <!-- Browse tab -->
-            <div id="chord-tab-browse" class="chord-tab-panel active" role="tabpanel">
-                <nav id="chord-tree" class="chord-tree" aria-label="Duyệt hợp âm theo nốt gốc"></nav>
-            </div>
+    <!-- View container -->
+    <div id="view-container">
 
-            <!-- Search tab -->
-            <div id="chord-tab-search" class="chord-tab-panel" role="tabpanel" hidden>
-                <div class="chord-search-container">
-                    <div class="search-input-wrapper">
-                        <input
-                            type="text"
-                            id="chord-search"
-                            class="chord-search-input"
-                            placeholder="Tìm (C, Am, G7, Cmaj7...)"
-                            autocomplete="off"
-                        >
-                        <ul id="chord-results" class="chord-results-list"></ul>
-                    </div>
-                </div>
-            </div>
+        <!-- HOME VIEW -->
+        <div class="view home-view" data-view="home">
+            <div id="home-content"></div>
+        </div>
 
-            <!-- Song/accompaniment tab -->
-            <div id="chord-tab-song" class="chord-tab-panel" role="tabpanel" hidden></div>
+        <!-- LEARN VIEW (full-screen lesson) -->
+        <div class="view learn-view" data-view="learn" id="learn-view">
+            <!-- Populated by LearnView.js -->
+        </div>
 
-            <!-- Theory reference tab -->
-            <div id="chord-tab-theory" class="chord-tab-panel" role="tabpanel" hidden>
-                <div class="theory-panel">
-                    <section class="theory-section">
-                        <h3 class="theory-heading">Cấu trúc hợp âm</h3>
-                        <table class="theory-table">
-                            <thead><tr><th>Loại</th><th>Công thức</th><th>Màu sắc</th></tr></thead>
-                            <tbody>
-                                <tr><td>Major</td><td>1 – 3 – 5</td><td>Sáng, vui</td></tr>
-                                <tr><td>Minor</td><td>1 – ♭3 – 5</td><td>Buồn, trầm</td></tr>
-                                <tr><td>Dom 7</td><td>1 – 3 – 5 – ♭7</td><td>Căng, muốn về</td></tr>
-                                <tr><td>Maj 7</td><td>1 – 3 – 5 – 7</td><td>Mơ mộng</td></tr>
-                                <tr><td>Min 7</td><td>1 – ♭3 – 5 – ♭7</td><td>Mềm mại</td></tr>
-                                <tr><td>Sus4</td><td>1 – 4 – 5</td><td>Lơ lửng</td></tr>
-                                <tr><td>Dim</td><td>1 – ♭3 – ♭5</td><td>Căng thẳng</td></tr>
-                                <tr><td>Aug</td><td>1 – 3 – ♯5</td><td>Huyền bí</td></tr>
-                            </tbody>
-                        </table>
-                    </section>
+        <!-- PRACTICE VIEW (piano + chords) -->
+        <div class="view practice-view" data-view="practice" id="practice-view">
 
-                    <section class="theory-section">
-                        <h3 class="theory-heading">Vòng hòa thanh (tương tác)</h3>
-                        <div id="prog-interactive-section"></div>
-                    </section>
-
-                    <section class="theory-section">
-                        <h3 class="theory-heading">Các bậc trong giọng C trưởng</h3>
-                        <table class="theory-table">
-                            <thead><tr><th>Bậc</th><th>Hợp âm</th><th>Chức năng</th></tr></thead>
-                            <tbody>
-                                <tr><td>I</td><td>C (Cmaj)</td><td>Chủ âm (Tonic)</td></tr>
-                                <tr><td>ii</td><td>Dm</td><td>Hạ thuộc (Subdominant)</td></tr>
-                                <tr><td>iii</td><td>Em</td><td>Trung gian</td></tr>
-                                <tr><td>IV</td><td>F (Fmaj)</td><td>Hạ thuộc (Subdominant)</td></tr>
-                                <tr><td>V</td><td>G (G7)</td><td>Át âm (Dominant)</td></tr>
-                                <tr><td>vi</td><td>Am</td><td>Chủ âm thứ</td></tr>
-                                <tr><td>vii°</td><td>Bdim</td><td>Dẫn âm (Leading tone)</td></tr>
-                            </tbody>
-                        </table>
-                    </section>
-
-                    <section class="theory-section">
-                        <h3 class="theory-heading">Đảo bậc (Inversions)</h3>
-                        <p class="theory-text">Đảo bậc là cách sắp xếp lại thứ tự các nốt trong hợp âm:</p>
-                        <ul class="theory-list">
-                            <li><strong>Bậc gốc (Root):</strong> nốt gốc ở dưới cùng — C·E·G</li>
-                            <li><strong>Đảo 1:</strong> nốt 3rd ở dưới — E·G·C</li>
-                            <li><strong>Đảo 2:</strong> nốt 5th ở dưới — G·C·E</li>
-                            <li><strong>Đảo 3 (7th chord):</strong> nốt 7th ở dưới — B·C·E·G</li>
-                        </ul>
-                        <p class="theory-text">Đảo bậc giúp bài nhạc trơn tru hơn — giảm khoảng cách tay khi chuyển hợp âm.</p>
-                    </section>
-
-                    <section class="theory-section">
-                        <h3 class="theory-heading">Kiểu đệm</h3>
-                        <ul class="theory-list">
-                            <li><strong>Đồng thời (Block):</strong> tất cả nốt cùng lúc — mạnh mẽ, rõ ràng</li>
-                            <li><strong>Bass trước:</strong> nốt trầm trước, chord sau — cảm giác ổn định</li>
-                            <li><strong>Rải (Arpeggio):</strong> nốt lần lượt — nhẹ nhàng, tinh tế</li>
-                            <li><strong>Rải lên-xuống:</strong> arpeggio hai chiều — phong phú hơn</li>
-                            <li><strong>Waltz 3/4:</strong> bass – chord – chord — cảm giác nhịp 3</li>
-                            <li><strong>Bossa Nova:</strong> syncopation tinh tế — latin groove</li>
-                        </ul>
-                    </section>
+            <div class="practice-header">
+                <span class="practice-title">🎹 Tự luyện</span>
+                <div class="practice-tools">
+                    <button class="practice-tool-btn" id="midi-toggle-btn" title="Kết nối MIDI">
+                        <span class="practice-tool-icon">🎛️</span>
+                        <span>MIDI</span>
+                    </button>
+                    <button class="practice-tool-btn" id="mic-toggle-btn" title="Microphone">
+                        <span class="practice-tool-icon">🎤</span>
+                        <span>Mic</span>
+                    </button>
+                    <button class="practice-tool-btn" id="metronome-toggle-btn" title="Metronome">
+                        <span class="practice-tool-icon">♩</span>
+                        <span>Metro</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- Chord detail panel (shared, shown below active tab) -->
-            <div id="chord-detail-panel" class="chord-detail-panel" aria-hidden="true">
-                <div class="chord-detail-panel-header">
-                    <span class="chord-detail-panel-title">Chi tiết</span>
-                    <button type="button" class="chord-detail-panel-close" aria-label="Đóng">✕</button>
-                </div>
-                <div id="chord-details-content" class="chord-detail-panel-body"></div>
+            <!-- Tabs: Piano / Chords / Theory -->
+            <div class="practice-tabs" role="tablist">
+                <button class="practice-tab active" data-ptab="piano">🎹 Đàn</button>
+                <button class="practice-tab" data-ptab="chords">🎼 Hợp âm</button>
+                <button class="practice-tab" data-ptab="songs">🎵 Đệm nhạc</button>
+                <button class="practice-tab" data-ptab="theory">📖 Lý thuyết</button>
             </div>
-        </aside>
 
-        <!-- ── Right: piano stage ── -->
-        <div class="piano-main">
+            <!-- Piano tab -->
+            <div class="practice-stage" id="practice-piano-tab">
 
-            <!-- Compact top bar: title + controls in one row -->
-            <header class="header">
-                <button type="button" id="sidebar-toggle-btn" class="sidebar-toggle-btn" aria-label="Mở bảng hợp âm">
-                    ☰ <span class="sidebar-toggle-label">Hợp âm</span>
-                </button>
-                <h1 class="title">PIANO</h1>
-                <div class="controls">
+                <!-- Chord info bar -->
+                <div class="chord-info-bar" id="chord-info-bar" aria-live="polite">
+                    <span class="chord-info-name"   id="chord-info-name"></span>
+                    <span class="chord-info-sep"     id="chord-info-sep-1" aria-hidden="true">·</span>
+                    <span class="chord-info-formula" id="chord-info-formula"></span>
+                    <span class="chord-info-sep"     id="chord-info-sep-2" aria-hidden="true">·</span>
+                    <span class="chord-info-sound"   id="chord-info-sound"></span>
+                    <span class="chord-info-empty"   id="chord-info-empty">Chọn hợp âm bên dưới để xem thông tin</span>
+                </div>
+
+                <!-- Metronome bar (hidden by default) -->
+                <div id="metronome-bar" class="metronome-bar hidden"></div>
+
+                <!-- Controls: theme + layout -->
+                <div class="practice-controls-row" id="practice-controls">
                     <div class="control-row">
                         <span class="control-label">Theme</span>
                         <div class="theme-switcher">
@@ -158,89 +143,172 @@
                             <button class="layout-btn" data-layout="88">88</button>
                         </div>
                     </div>
-                    <div class="control-row">
-                        <span class="control-label">Input</span>
-                        <div style="display:flex;gap:6px;align-items:center;">
-                            <button id="midi-toggle-btn" class="midi-status-indicator" title="Kết nối MIDI">
-                                <span class="midi-dot"></span>MIDI
-                            </button>
-                            <button id="mic-toggle-btn" class="midi-status-indicator" title="Dùng microphone">
-                                🎤 Mic
-                            </button>
+                </div>
+
+                <!-- Keyboard -->
+                <div id="keyboard" style="overflow-x:auto;max-width:100%;display:flex;justify-content:center;flex:1;min-height:0;"></div>
+
+                <!-- Footer hints -->
+                <footer class="footer" style="display:block">
+                    <div class="key-hint">
+                        <div class="hint-row">
+                            <span>Oct 4</span>
+                            <kbd>Z</kbd><kbd>S</kbd><kbd>X</kbd><kbd>D</kbd><kbd>C</kbd>
+                            <kbd>V</kbd><kbd>G</kbd><kbd>B</kbd><kbd>H</kbd><kbd>N</kbd><kbd>J</kbd><kbd>M</kbd>
+                        </div>
+                        <div class="hint-row">
+                            <span>Oct 5</span>
+                            <kbd>Q</kbd><kbd>2</kbd><kbd>W</kbd><kbd>3</kbd><kbd>E</kbd>
+                            <kbd>R</kbd><kbd>5</kbd><kbd>T</kbd><kbd>6</kbd><kbd>Y</kbd><kbd>7</kbd><kbd>U</kbd>
                         </div>
                     </div>
-                </div>
-            </header>
-
-            <!-- Chord info bar: shows selected chord's formula + sound character -->
-            <div class="chord-info-bar" id="chord-info-bar" aria-live="polite">
-                <span class="chord-info-name"    id="chord-info-name"></span>
-                <span class="chord-info-sep"      id="chord-info-sep-1" aria-hidden="true">·</span>
-                <span class="chord-info-formula"  id="chord-info-formula"></span>
-                <span class="chord-info-sep"      id="chord-info-sep-2" aria-hidden="true">·</span>
-                <span class="chord-info-sound"    id="chord-info-sound"></span>
-                <span class="chord-info-empty"    id="chord-info-empty">Chọn hợp âm bên trái để xem thông tin</span>
+                </footer>
             </div>
 
-            <!-- Keyboard -->
-            <main class="main">
-                <div id="keyboard"></div>
-            </main>
+            <!-- Chords tab (re-use existing sidebar content) -->
+            <div class="practice-stage hidden" id="practice-chords-tab">
+                <aside class="chord-sidebar" aria-label="Hợp âm" style="display:flex;flex-direction:column;flex:1;min-height:0;max-width:100%;width:100%;border:none;">
+                    <div class="chord-sidebar-top">
+                        <div class="chord-sidebar-tabs" role="tablist">
+                            <button type="button" class="chord-tab-btn active" data-tab="browse"  role="tab" aria-selected="true">Duyệt</button>
+                            <button type="button" class="chord-tab-btn"        data-tab="search"  role="tab" aria-selected="false">Tìm</button>
+                            <button type="button" class="chord-tab-btn"        data-tab="theory"  role="tab" aria-selected="false">Lý thuyết</button>
+                        </div>
+                    </div>
+                    <div id="chord-tab-browse" class="chord-tab-panel active" role="tabpanel">
+                        <nav id="chord-tree" class="chord-tree" aria-label="Duyệt hợp âm theo nốt gốc"></nav>
+                    </div>
+                    <div id="chord-tab-search" class="chord-tab-panel" role="tabpanel" hidden>
+                        <div class="chord-search-container">
+                            <div class="search-input-wrapper">
+                                <input type="text" id="chord-search" class="chord-search-input" placeholder="Tìm (C, Am, G7, Cmaj7...)" autocomplete="off">
+                                <ul id="chord-results" class="chord-results-list"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="chord-tab-theory" class="chord-tab-panel" role="tabpanel" hidden>
+                        <div class="theory-panel">
+                            <section class="theory-section">
+                                <h3 class="theory-heading">Cấu trúc hợp âm</h3>
+                                <table class="theory-table">
+                                    <thead><tr><th>Loại</th><th>Công thức</th><th>Màu sắc</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>Major</td><td>1 – 3 – 5</td><td>Sáng, vui</td></tr>
+                                        <tr><td>Minor</td><td>1 – ♭3 – 5</td><td>Buồn, trầm</td></tr>
+                                        <tr><td>Dom 7</td><td>1 – 3 – 5 – ♭7</td><td>Căng, muốn về</td></tr>
+                                        <tr><td>Maj 7</td><td>1 – 3 – 5 – 7</td><td>Mơ mộng</td></tr>
+                                        <tr><td>Min 7</td><td>1 – ♭3 – 5 – ♭7</td><td>Mềm mại</td></tr>
+                                        <tr><td>Sus4</td><td>1 – 4 – 5</td><td>Lơ lửng</td></tr>
+                                        <tr><td>Dim</td><td>1 – ♭3 – ♭5</td><td>Căng thẳng</td></tr>
+                                        <tr><td>Aug</td><td>1 – 3 – ♯5</td><td>Huyền bí</td></tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                            <section class="theory-section">
+                                <h3 class="theory-heading">Vòng hòa thanh (tương tác)</h3>
+                                <div id="prog-interactive-section"></div>
+                            </section>
+                        </div>
+                    </div>
+                    <div id="chord-detail-panel" class="chord-detail-panel" aria-hidden="true">
+                        <div class="chord-detail-panel-header">
+                            <span class="chord-detail-panel-title">Chi tiết</span>
+                            <button type="button" class="chord-detail-panel-close" aria-label="Đóng">✕</button>
+                        </div>
+                        <div id="chord-details-content" class="chord-detail-panel-body"></div>
+                    </div>
+                </aside>
+            </div>
 
-            <!-- Footer: keyboard hints -->
-            <footer class="footer">
-                <div class="key-hint">
-                    <div class="hint-row">
-                        <span>Oct 4</span>
-                        <kbd>Z</kbd><kbd>S</kbd><kbd>X</kbd><kbd>D</kbd><kbd>C</kbd>
-                        <kbd>V</kbd><kbd>G</kbd><kbd>B</kbd><kbd>H</kbd><kbd>N</kbd><kbd>J</kbd><kbd>M</kbd>
-                    </div>
-                    <div class="hint-row">
-                        <span>Oct 5</span>
-                        <kbd>Q</kbd><kbd>2</kbd><kbd>W</kbd><kbd>3</kbd><kbd>E</kbd>
-                        <kbd>R</kbd><kbd>5</kbd><kbd>T</kbd><kbd>6</kbd><kbd>Y</kbd><kbd>7</kbd><kbd>U</kbd>
-                    </div>
+            <!-- Songs tab -->
+            <div class="practice-stage hidden" id="practice-songs-tab">
+                <div id="chord-tab-song" style="flex:1;min-height:0;overflow-y:auto;padding:12px;width:100%;"></div>
+            </div>
+
+            <!-- Theory tab -->
+            <div class="practice-stage hidden" id="practice-theory-tab">
+                <div style="flex:1;min-height:0;overflow-y:auto;padding:12px;width:100%;">
+                    <div id="prog-interactive-section-2"></div>
                 </div>
-            </footer>
+            </div>
+
+        </div><!-- /practice-view -->
+
+        <!-- PROFILE VIEW -->
+        <div class="view profile-view" data-view="profile" id="profile-view">
+            <div id="profile-content"></div>
         </div>
-    </div>
 
-    <script>
-        window.onerror = function(msg, src, line, col, err) {
-            var div = document.createElement('div');
-            div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:12px;z-index:9999;font:14px monospace;white-space:pre-wrap;';
-            div.textContent = 'JS ERROR: ' + msg + '\nFile: ' + src + '\nLine: ' + line;
-            document.body.appendChild(div);
-        };
-    </script>
-    <!-- Core audio + UI -->
-    <script src="js/audio.js"></script>
-    <script src="js/keyboard.js"></script>
-    <script src="js/visualizer.js"></script>
-    <script src="js/chords.js"></script>
-    <script src="js/chordPlayer.js"></script>
-    <script src="js/songParser.js"></script>
-    <script src="js/songAccompaniment.js"></script>
-    <script src="js/songPlayer.js"></script>
-    <script src="js/chordUI.js"></script>
-    <script src="js/songUI.js"></script>
-    <script src="js/progressionPlayer.js"></script>
+    </div><!-- /view-container -->
 
-    <!-- EdTech: input sources -->
-    <script src="js/midi.js"></script>
-    <script src="js/pitchDetector.js"></script>
-    <script src="js/inputRouter.js"></script>
-    <script src="js/noteHighlighter.js"></script>
+    <!-- Bottom navigation -->
+    <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+        <button class="nav-btn active" data-view="home" id="nav-home">
+            <span class="nav-btn-icon">🏠</span>
+            <span class="nav-btn-label">Trang chủ</span>
+        </button>
+        <button class="nav-btn" data-view="learn" id="nav-learn">
+            <span class="nav-btn-icon">📚</span>
+            <span class="nav-btn-label">Học</span>
+        </button>
+        <button class="nav-btn" data-view="practice" id="nav-practice">
+            <span class="nav-btn-icon">🎹</span>
+            <span class="nav-btn-label">Luyện</span>
+        </button>
+        <button class="nav-btn" data-view="profile" id="nav-profile">
+            <span class="nav-btn-icon">👤</span>
+            <span class="nav-btn-label">Hồ sơ</span>
+        </button>
+    </nav>
 
-    <!-- EdTech: lesson system -->
-    <script src="data/lessons.js"></script>
-    <script src="js/scorer.js"></script>
-    <script src="js/lessonEngine.js"></script>
-    <script src="js/progressStore.js"></script>
-    <script src="js/lessonUI.js"></script>
-    <script src="js/dashboard.js"></script>
+</div><!-- /app -->
 
-    <!-- App bootstrap (must be last) -->
-    <script src="js/app.js"></script>
+<script>
+    window.onerror = function(msg, src, line, col, err) {
+        var div = document.createElement('div');
+        div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;padding:10px;z-index:9999;font:12px monospace;white-space:pre-wrap;';
+        div.textContent = 'JS ERROR: ' + msg + '\nFile: ' + src + ' L' + line;
+        document.body.appendChild(div);
+    };
+</script>
+
+<!-- Core audio + input -->
+<script src="js/audio.js"></script>
+<script src="js/keyboard.js"></script>
+<script src="js/visualizer.js"></script>
+<script src="js/midi.js"></script>
+<script src="js/pitchDetector.js"></script>
+<script src="js/inputRouter.js"></script>
+<script src="js/noteHighlighter.js"></script>
+
+<!-- Chord system -->
+<script src="js/chords.js"></script>
+<script src="js/chordPlayer.js"></script>
+<script src="js/songParser.js"></script>
+<script src="js/songAccompaniment.js"></script>
+<script src="js/songPlayer.js"></script>
+<script src="js/chordUI.js"></script>
+<script src="js/songUI.js"></script>
+<script src="js/progressionPlayer.js"></script>
+
+<!-- Lesson system -->
+<script src="data/lessons.js"></script>
+<script src="js/scorer.js"></script>
+<script src="js/lessonEngine.js"></script>
+<script src="js/progressStore.js"></script>
+
+<!-- New: App shell & views -->
+<script src="js/router.js"></script>
+<script src="js/metronome.js"></script>
+<script src="js/fallingNotes.js"></script>
+<script src="js/views/homeView.js"></script>
+<script src="js/views/learnView.js"></script>
+<script src="js/views/profileView.js"></script>
+<script src="js/views/onboarding.js"></script>
+<script src="js/appShell.js"></script>
+
+<!-- Bootstrap (must be last) -->
+<script src="js/app.js"></script>
+
 </body>
 </html>

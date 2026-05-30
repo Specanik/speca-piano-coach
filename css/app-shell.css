@@ -1,0 +1,944 @@
+/* ═══════════════════════════════════════════════════════════════════
+   APP SHELL — Top bar, Bottom nav, View system
+   Replaces the old .app-layout flex-row structure for the new SPA.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Reset old layout constraint ─────────────────────────────────── */
+#app.app-layout {
+    flex-direction: column !important;
+    overflow: hidden;
+}
+
+/* ── Top bar ──────────────────────────────────────────────────────── */
+.top-bar {
+    height: 52px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: rgba(10, 10, 20, 0.95);
+    border-bottom: 1px solid rgba(100, 160, 255, 0.1);
+    gap: 12px;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.top-bar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.top-bar-logo-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.top-bar-logo-text {
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #e0eaff;
+    text-transform: uppercase;
+}
+
+.top-bar-spacer { flex: 1; }
+
+/* XP + streak chips */
+.top-bar-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    cursor: default;
+    transition: transform 0.15s;
+    white-space: nowrap;
+}
+
+.stat-pill:active { transform: scale(0.95); }
+
+.stat-pill-xp {
+    background: rgba(74, 158, 255, 0.12);
+    border-color: rgba(74, 158, 255, 0.25);
+    color: #7ab8ff;
+}
+
+.stat-pill-streak {
+    background: rgba(255, 140, 50, 0.12);
+    border-color: rgba(255, 140, 50, 0.25);
+    color: #ff9040;
+}
+
+.stat-pill-streak.active-streak {
+    background: rgba(255, 100, 20, 0.18);
+    border-color: rgba(255, 120, 30, 0.4);
+    color: #ff6820;
+    animation: streakPulse 2s ease-in-out infinite;
+}
+
+@keyframes streakPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 100, 20, 0); }
+    50%       { box-shadow: 0 0 8px 2px rgba(255, 100, 20, 0.25); }
+}
+
+.stat-pill-badges {
+    background: rgba(200, 100, 255, 0.1);
+    border-color: rgba(200, 100, 255, 0.22);
+    color: #c864ff;
+}
+
+/* ── View container ───────────────────────────────────────────────── */
+#view-container {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.view {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.view.view-active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+/* ── Bottom navigation ────────────────────────────────────────────── */
+.bottom-nav {
+    height: 60px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    background: rgba(8, 8, 18, 0.97);
+    border-top: 1px solid rgba(100, 160, 255, 0.1);
+    z-index: 50;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #3a4a5a;
+    transition: color 0.18s, background 0.18s;
+    font-family: inherit;
+    position: relative;
+    padding: 6px 4px 4px;
+}
+
+.nav-btn:hover { color: #6a8aaa; }
+
+.nav-btn.active {
+    color: #4a9eff;
+}
+
+.nav-btn.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 25%;
+    right: 25%;
+    height: 2px;
+    background: #4a9eff;
+    border-radius: 0 0 2px 2px;
+}
+
+.nav-btn-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+    transition: transform 0.15s;
+}
+
+.nav-btn.active .nav-btn-icon { transform: scale(1.1); }
+
+.nav-btn-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* ── HOME VIEW ────────────────────────────────────────────────────── */
+.home-view {
+    padding: 0;
+    background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0d0d17 60%);
+    min-height: 100%;
+}
+
+/* Hero section */
+.home-hero {
+    padding: 20px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.home-greeting {
+    font-size: 0.85rem;
+    color: #6888a8;
+    font-weight: 500;
+}
+
+.home-cta-card {
+    background: linear-gradient(135deg, #1e2d5a 0%, #2a1a4a 100%);
+    border: 1px solid rgba(100, 160, 255, 0.25);
+    border-radius: 16px;
+    padding: 18px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    position: relative;
+    overflow: hidden;
+}
+
+.home-cta-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(74, 158, 255, 0.2);
+    border-color: rgba(100, 160, 255, 0.4);
+}
+
+.home-cta-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(74, 158, 255, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.home-cta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f0c040;
+    margin-bottom: 6px;
+}
+
+.home-cta-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #e8f0ff;
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+
+.home-cta-sub {
+    font-size: 0.75rem;
+    color: #7a9ab8;
+    margin-bottom: 14px;
+}
+
+.home-cta-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.home-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.home-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4a9eff, #7b5ea7);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.home-progress-text {
+    font-size: 0.7rem;
+    color: #6888a8;
+    white-space: nowrap;
+}
+
+.home-cta-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #4a9eff, #7b5ea7);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: opacity 0.15s, transform 0.1s;
+    font-family: inherit;
+}
+
+.home-cta-btn:hover  { opacity: 0.9; }
+.home-cta-btn:active { transform: scale(0.97); }
+
+/* Stats row */
+.home-stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 0 18px;
+}
+
+.home-stat-card {
+    background: rgba(100, 160, 255, 0.06);
+    border: 1px solid rgba(100, 160, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+}
+
+.home-stat-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #e0eaff;
+    line-height: 1;
+    display: block;
+}
+
+.home-stat-label {
+    font-size: 0.62rem;
+    color: #4a6888;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 3px;
+    display: block;
+}
+
+/* Section header */
+.home-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 18px 10px;
+}
+
+.home-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #9ab8d8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.home-section-link {
+    font-size: 0.72rem;
+    color: #4a9eff;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: 0;
+}
+
+/* Lesson path (Duolingo-style) */
+.lesson-path {
+    padding: 0 18px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.path-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    width: 100%;
+    margin-bottom: -6px;
+}
+
+.path-row.offset-right { padding-left: 60px; }
+.path-row.offset-left  { padding-right: 60px; }
+
+.path-node {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 8px;
+}
+
+.path-node-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    border: 3px solid transparent;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+}
+
+.path-node:hover .path-node-circle { transform: scale(1.08); }
+
+/* States */
+.path-node.done .path-node-circle {
+    background: linear-gradient(135deg, #2a6a40, #1a4a28);
+    border-color: #50c878;
+}
+
+.path-node.current .path-node-circle {
+    background: linear-gradient(135deg, #1e3a6a, #2a1a5a);
+    border-color: #4a9eff;
+    box-shadow: 0 0 20px rgba(74, 158, 255, 0.4);
+    animation: currentPulse 2s ease-in-out infinite;
+}
+
+.path-node.locked .path-node-circle {
+    background: rgba(20, 20, 35, 0.8);
+    border-color: rgba(100, 160, 255, 0.12);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+@keyframes currentPulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(74, 158, 255, 0.35); }
+    50%       { box-shadow: 0 0 24px rgba(74, 158, 255, 0.6);  }
+}
+
+.path-node-stars {
+    display: flex;
+    gap: 1px;
+    font-size: 0.55rem;
+}
+
+.path-node-label {
+    font-size: 0.6rem;
+    color: #4a6888;
+    text-align: center;
+    max-width: 60px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.path-node.current .path-node-label { color: #7ab8ff; font-weight: 700; }
+.path-node.done    .path-node-label { color: #50c878; }
+
+/* Star in node for done */
+.path-star-count {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: #f0c040;
+    color: #000;
+    font-size: 0.55rem;
+    font-weight: 800;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #0d0d17;
+}
+
+/* Connector line between nodes */
+.path-connector {
+    width: 20px;
+    height: 3px;
+    background: rgba(100, 160, 255, 0.12);
+    border-radius: 2px;
+    margin: 0 -4px;
+    align-self: center;
+    margin-bottom: 28px;
+}
+
+.path-connector.done-line {
+    background: rgba(80, 200, 120, 0.35);
+}
+
+/* ── PRACTICE VIEW (Piano) ────────────────────────────────────────── */
+.practice-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 40%, #1a1a2e 0%, #0d0d17 100%);
+}
+
+.practice-header {
+    padding: 10px 16px 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(100, 160, 255, 0.08);
+}
+
+.practice-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #e0eaff;
+    letter-spacing: 0.04em;
+    flex: 1;
+}
+
+.practice-tools {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.practice-tool-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 10px;
+    background: rgba(100, 160, 255, 0.07);
+    border: 1px solid rgba(100, 160, 255, 0.15);
+    border-radius: 8px;
+    color: #7a9ab8;
+    font-size: 0.62rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+}
+
+.practice-tool-btn:hover { background: rgba(100, 160, 255, 0.14); color: #e0eaff; }
+.practice-tool-btn.active { background: rgba(100, 160, 255, 0.22); border-color: rgba(100, 160, 255, 0.4); color: #7ab8ff; }
+
+.practice-tool-icon { font-size: 1rem; }
+
+/* Practice sub-tabs */
+.practice-tabs {
+    display: flex;
+    padding: 8px 16px 0;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.practice-tab {
+    padding: 7px 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #4a6888;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.practice-tab:hover { color: #9ab8d8; }
+
+.practice-tab.active {
+    color: #4a9eff;
+    border-bottom-color: #4a9eff;
+}
+
+/* Piano stage in practice view */
+.practice-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    gap: 8px;
+    padding: 8px 0 4px;
+}
+
+/* ── LEARN VIEW (Full-screen lesson) ──────────────────────────────── */
+.learn-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: #0d0d17;
+}
+
+/* ── PROFILE VIEW ─────────────────────────────────────────────────── */
+.profile-view {
+    padding: 16px;
+    background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0d0d17 100%);
+    min-height: 100%;
+}
+
+.profile-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0 16px;
+    gap: 10px;
+}
+
+.profile-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a9eff, #7b5ea7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    border: 3px solid rgba(74, 158, 255, 0.3);
+}
+
+.profile-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #e8f0ff;
+}
+
+.profile-level {
+    font-size: 0.72rem;
+    color: #6888a8;
+    background: rgba(100, 160, 255, 0.1);
+    padding: 3px 12px;
+    border-radius: 20px;
+}
+
+/* XP Progress bar */
+.profile-xp-section {
+    background: rgba(100, 160, 255, 0.06);
+    border: 1px solid rgba(100, 160, 255, 0.12);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+.profile-xp-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: #7a9ab8;
+    margin-bottom: 8px;
+}
+
+.profile-xp-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.profile-xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4a9eff, #7b5ea7);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+/* Badges section */
+.profile-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6888a8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+}
+
+.profile-badges-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.profile-badge {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: rgba(100, 160, 255, 0.05);
+    border: 1px solid rgba(100, 160, 255, 0.1);
+    padding: 8px;
+    cursor: default;
+    transition: transform 0.15s;
+}
+
+.profile-badge.earned {
+    border-color: rgba(200, 100, 255, 0.3);
+    background: rgba(200, 100, 255, 0.07);
+}
+
+.profile-badge:hover.earned { transform: scale(1.06); }
+
+.profile-badge-icon {
+    font-size: 1.5rem;
+    filter: grayscale(1);
+    opacity: 0.3;
+    transition: filter 0.2s, opacity 0.2s;
+}
+
+.profile-badge.earned .profile-badge-icon {
+    filter: grayscale(0);
+    opacity: 1;
+}
+
+.profile-badge-name {
+    font-size: 0.55rem;
+    color: #3a5878;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.profile-badge.earned .profile-badge-name { color: #c070ff; }
+
+/* Streak calendar */
+.streak-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 18px;
+}
+
+.streak-day {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background: rgba(100, 160, 255, 0.05);
+    border: 1px solid rgba(100, 160, 255, 0.07);
+}
+
+.streak-day.active {
+    background: rgba(255, 140, 50, 0.3);
+    border-color: rgba(255, 140, 50, 0.4);
+}
+
+.streak-day.today {
+    border-color: rgba(74, 158, 255, 0.5);
+}
+
+/* ── Utility ──────────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ── Transitions between views ────────────────────────────────────── */
+.view-slide-in-right {
+    animation: slideInRight 0.25s ease forwards;
+}
+.view-slide-in-left {
+    animation: slideInLeft 0.25s ease forwards;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(30px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideInLeft {
+    from { transform: translateX(-30px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+}
+
+/* ── Responsive: desktop sidebar for practice ─────────────────────── */
+@media (min-width: 900px) {
+    .practice-view {
+        flex-direction: row;
+    }
+
+    .practice-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+        border-right: 1px solid rgba(100, 160, 255, 0.1);
+        overflow-y: auto;
+    }
+
+    .bottom-nav {
+        display: none;
+    }
+
+    /* Desktop: side nav */
+    .side-nav {
+        display: flex !important;
+        flex-direction: column;
+        width: 72px;
+        flex-shrink: 0;
+        background: rgba(8, 8, 18, 0.95);
+        border-right: 1px solid rgba(100, 160, 255, 0.08);
+        padding: 8px 0;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .side-nav .nav-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .side-nav .nav-btn.active::before {
+        left: 0;
+        top: 10%;
+        bottom: 10%;
+        right: auto;
+        width: 3px;
+        height: auto;
+        border-radius: 0 2px 2px 0;
+    }
+
+    #view-container {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+    }
+}
+
+/* ── The old .header (piano controls) is now inside practice-view ─── */
+/* No global hide needed — it's already scoped to #practice-piano-tab */
+.practice-controls-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 6px 14px 4px;
+    flex-shrink: 0;
+}
+
+.practice-controls-row .control-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.practice-controls-row .control-label {
+    font-size: 0.62rem;
+    color: #3a3a4a;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* ── Onboarding overlay ───────────────────────────────────────────── */
+.onboarding-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: #0d0d17;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeIn 0.3s ease;
+}
+
+.onboarding-overlay.hidden { display: none; }
+
+.onboarding-slide {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    max-width: 360px;
+    width: 100%;
+}
+
+.onboarding-slide.active { display: flex; }
+
+.onboarding-emoji { font-size: 4rem; }
+
+.onboarding-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #e8f0ff;
+    line-height: 1.2;
+}
+
+.onboarding-text {
+    font-size: 0.88rem;
+    color: #7a9ab8;
+    line-height: 1.6;
+}
+
+.onboarding-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.onboarding-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(100, 160, 255, 0.2);
+    transition: background 0.2s, width 0.2s;
+}
+
+.onboarding-dot.active {
+    background: #4a9eff;
+    width: 20px;
+    border-radius: 3px;
+}
+
+.onboarding-btn {
+    width: 100%;
+    max-width: 280px;
+    padding: 14px;
+    background: linear-gradient(135deg, #4a9eff, #7b5ea7);
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s, transform 0.1s;
+}
+
+.onboarding-btn:hover  { opacity: 0.9; }
+.onboarding-btn:active { transform: scale(0.98); }
+
+.onboarding-skip {
+    background: none;
+    border: none;
+    color: #3a5878;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 8px;
+}

@@ -1,0 +1,822 @@
+/* ═══════════════════════════════════════════════════════════════════
+   LEARN VIEW — Full-screen lesson experience
+   Sprint 3: Replaces the old modal-based lessonUI
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Learn View Shell ─────────────────────────────────────────────── */
+.learn-view {
+    background: #0d0d17;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ── Lesson Header ────────────────────────────────────────────────── */
+.lv-header {
+    height: 50px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    background: rgba(10, 10, 20, 0.9);
+    border-bottom: 1px solid rgba(100, 160, 255, 0.1);
+}
+
+.lv-back-btn {
+    background: none;
+    border: none;
+    color: #5a7898;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+.lv-back-btn:hover { color: #e0eaff; background: rgba(100, 160, 255, 0.1); }
+
+.lv-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #c0d8f0;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lv-close-btn {
+    background: none;
+    border: none;
+    color: #3a5878;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: color 0.15s;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+.lv-close-btn:hover { color: #e0eaff; }
+
+/* ── Step progress indicator ──────────────────────────────────────── */
+.lv-step-bar {
+    height: 4px;
+    background: rgba(100, 160, 255, 0.08);
+    flex-shrink: 0;
+    display: flex;
+    gap: 3px;
+    padding: 0 14px;
+}
+
+.lv-step-seg {
+    flex: 1;
+    height: 100%;
+    border-radius: 2px;
+    background: rgba(100, 160, 255, 0.1);
+    transition: background 0.3s;
+}
+
+.lv-step-seg.done    { background: #50c878; }
+.lv-step-seg.current {
+    background: #4a9eff;
+    animation: stepPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes stepPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+}
+
+/* ── Step type badge ──────────────────────────────────────────────── */
+.lv-step-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 10px 16px 4px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+.lv-badge-theory   { background: rgba(100,160,255,0.12); color: #7ab8ff; border: 1px solid rgba(100,160,255,0.2); }
+.lv-badge-practice { background: rgba(80,200,120,0.12);  color: #50c878; border: 1px solid rgba(80,200,120,0.2); }
+.lv-badge-play     { background: rgba(255,165,50,0.12);  color: #ffa032; border: 1px solid rgba(255,165,50,0.2); }
+.lv-badge-quiz     { background: rgba(200,100,255,0.12); color: #c864ff; border: 1px solid rgba(200,100,255,0.2); }
+
+/* ── Content area ─────────────────────────────────────────────────── */
+.lv-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.lv-content::-webkit-scrollbar { width: 4px; }
+.lv-content::-webkit-scrollbar-track { background: transparent; }
+.lv-content::-webkit-scrollbar-thumb { background: rgba(100,160,255,0.15); border-radius: 2px; }
+
+/* ── THEORY STEP ──────────────────────────────────────────────────── */
+.lv-theory {
+    padding: 16px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: slideUp 0.25s ease;
+}
+
+.lv-theory-heading {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #e8f0ff;
+    line-height: 1.3;
+}
+
+.lv-theory-body {
+    font-size: 0.83rem;
+    line-height: 1.7;
+    color: #9ab8d0;
+}
+
+.lv-theory-body h3 {
+    font-size: 0.88rem;
+    color: #d0e4ff;
+    font-weight: 700;
+    margin: 14px 0 6px;
+}
+
+.lv-theory-body h3:first-child { margin-top: 0; }
+
+.lv-theory-body p  { margin: 0 0 10px; }
+.lv-theory-body ul { padding-left: 18px; margin: 0 0 10px; }
+.lv-theory-body li { margin-bottom: 4px; }
+
+.lv-theory-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin: 10px 0;
+}
+
+.lv-theory-body th {
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(100,160,255,0.18);
+    color: #6888aa;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.lv-theory-body td {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(100,160,255,0.06);
+    color: #9ab8d0;
+}
+
+/* Theory key diagram (mini piano) */
+.theory-mini-piano {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    justify-content: center;
+    background: #1a1a2e;
+    border-radius: 10px;
+    padding: 12px 16px 16px;
+    margin: 4px 0;
+}
+
+.theory-mini-key-w {
+    width: 24px;
+    height: 60px;
+    background: linear-gradient(to bottom, #e8e4dc, #faf8f5);
+    border: 1px solid #aaa;
+    border-radius: 0 0 4px 4px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 4px;
+    font-size: 0.55rem;
+    color: #888;
+    font-weight: 600;
+    cursor: default;
+    flex-shrink: 0;
+}
+
+.theory-mini-key-b {
+    width: 16px;
+    height: 38px;
+    background: #1a1a1a;
+    border-radius: 0 0 3px 3px;
+    margin: 0 -8px;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.theory-mini-key-w.highlight {
+    background: linear-gradient(to bottom, #ffd700, #ffed4e);
+    border-color: #c9a500;
+}
+
+.theory-mini-key-b.highlight {
+    background: linear-gradient(160deg, #ff8c00, #cc5500);
+}
+
+/* ── PRACTICE STEP ────────────────────────────────────────────────── */
+.lv-practice {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.lv-practice-instruction {
+    padding: 10px 18px 8px;
+    font-size: 0.85rem;
+    color: #c0d8f0;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.lv-practice-hint {
+    margin: 0 18px 8px;
+    padding: 8px 12px;
+    background: rgba(74, 158, 255, 0.07);
+    border-left: 3px solid #4a9eff;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.75rem;
+    color: #6888aa;
+    flex-shrink: 0;
+}
+
+/* Feedback status */
+.lv-feedback {
+    margin: 0 18px 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.lv-feedback.correct {
+    background: rgba(80, 200, 120, 0.15);
+    color: #50c878;
+    border: 1px solid rgba(80, 200, 120, 0.25);
+}
+
+.lv-feedback.wrong {
+    background: rgba(255, 80, 80, 0.12);
+    color: #ff6060;
+    border: 1px solid rgba(255, 80, 80, 0.2);
+}
+
+.lv-feedback.waiting {
+    background: rgba(74, 158, 255, 0.08);
+    color: #5888aa;
+    border: 1px solid rgba(74, 158, 255, 0.12);
+}
+
+/* Piano in practice/play step */
+.lv-piano-area {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    overflow: hidden;
+    padding: 0 0 6px;
+}
+
+/* ── PLAY STEP (Falling notes) ────────────────────────────────────── */
+.lv-play {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Falling notes canvas area */
+.lv-falling-area {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.falling-notes-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Sequence progress dots */
+.lv-seq-progress {
+    padding: 6px 18px 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.lv-seq-progress-text {
+    font-size: 0.72rem;
+    color: #5a7898;
+    margin-left: auto;
+}
+
+.lv-seq-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(100, 160, 255, 0.15);
+    transition: background 0.2s, transform 0.15s;
+}
+
+.lv-seq-dot.done    { background: #50c878; }
+.lv-seq-dot.current { background: #ffa032; transform: scale(1.3); }
+
+/* BPM + wait mode controls */
+.lv-play-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 18px 4px;
+    flex-shrink: 0;
+}
+
+.lv-play-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(100, 160, 255, 0.2);
+    background: rgba(100, 160, 255, 0.07);
+    color: #7a9ab8;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+
+.lv-play-mode-btn.active {
+    background: rgba(74, 158, 255, 0.18);
+    border-color: rgba(74, 158, 255, 0.4);
+    color: #4a9eff;
+}
+
+.lv-bpm-display {
+    font-size: 0.7rem;
+    color: #4a6888;
+    margin-left: auto;
+}
+
+/* ── QUIZ STEP ────────────────────────────────────────────────────── */
+.lv-quiz {
+    padding: 16px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: slideUp 0.25s ease;
+}
+
+.lv-quiz-question {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #d8eaff;
+    line-height: 1.4;
+}
+
+.lv-quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lv-quiz-option {
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    background: rgba(100, 160, 255, 0.06);
+    border: 1px solid rgba(100, 160, 255, 0.14);
+    border-radius: 10px;
+    color: #9ab8d0;
+    font-size: 0.83rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+    line-height: 1.4;
+}
+
+.lv-quiz-option:hover:not(:disabled) {
+    background: rgba(100, 160, 255, 0.13);
+    border-color: rgba(100, 160, 255, 0.28);
+    color: #d0e8ff;
+    transform: translateX(2px);
+}
+
+.lv-quiz-option.correct {
+    background: rgba(80, 200, 120, 0.18);
+    border-color: rgba(80, 200, 120, 0.45);
+    color: #50c878;
+}
+
+.lv-quiz-option.wrong {
+    background: rgba(255, 80, 80, 0.12);
+    border-color: rgba(255, 80, 80, 0.3);
+    color: #ff7070;
+    animation: wrongShake 0.35s ease;
+}
+
+@keyframes wrongShake {
+    0%, 100% { transform: translateX(0); }
+    25%       { transform: translateX(-4px); }
+    75%       { transform: translateX(4px); }
+}
+
+.lv-quiz-explanation {
+    padding: 10px 14px;
+    background: rgba(100, 160, 255, 0.07);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: #7a9ab8;
+    border-left: 3px solid #4a9eff;
+    display: none;
+}
+
+.lv-quiz-explanation.show { display: block; animation: fadeIn 0.3s ease; }
+
+/* ── RESULT SCREEN ────────────────────────────────────────────────── */
+.lv-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 22px 20px;
+    gap: 12px;
+    text-align: center;
+    min-height: 100%;
+    animation: slideUp 0.3s ease;
+}
+
+.lv-result-emoji {
+    font-size: 4rem;
+    animation: bounceIn 0.4s ease;
+}
+
+@keyframes bounceIn {
+    0%   { transform: scale(0.5); opacity: 0; }
+    60%  { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.lv-result-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #e8f0ff;
+}
+
+.lv-result-stars {
+    font-size: 2.5rem;
+    letter-spacing: 6px;
+    animation: starsReveal 0.5s ease 0.2s both;
+}
+
+@keyframes starsReveal {
+    from { transform: scale(0.8); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+
+.lv-result-score {
+    font-size: 3rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #4a9eff, #7b5ea7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.lv-result-grade {
+    font-size: 0.9rem;
+    color: #9ab8d0;
+    margin-top: -6px;
+}
+
+.lv-result-xp {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 18px;
+    background: rgba(240, 192, 64, 0.12);
+    border: 1px solid rgba(240, 192, 64, 0.25);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #f0c040;
+    animation: xpPop 0.4s ease 0.4s both;
+}
+
+@keyframes xpPop {
+    from { transform: scale(0.8); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+
+.lv-result-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 300px;
+}
+
+.lv-result-badge-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: rgba(200, 100, 255, 0.1);
+    border: 1px solid rgba(200, 100, 255, 0.25);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    color: #d080ff;
+    font-weight: 600;
+    animation: badgePop 0.35s ease both;
+}
+
+@keyframes badgePop {
+    from { transform: scale(0.7) rotate(-10deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.lv-result-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 320px;
+    margin-top: 6px;
+}
+
+/* ── Lesson list (Learn view default state) ───────────────────────── */
+.lv-lesson-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lv-lesson-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: rgba(100, 160, 255, 0.06);
+    border: 1px solid rgba(100, 160, 255, 0.1);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+}
+
+.lv-lesson-card:hover {
+    background: rgba(100, 160, 255, 0.12);
+    border-color: rgba(100, 160, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.lv-lesson-card.completed { border-color: rgba(80, 200, 120, 0.25); }
+
+.lv-lesson-thumb {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    width: 44px;
+    text-align: center;
+}
+
+.lv-lesson-info { flex: 1; min-width: 0; }
+
+.lv-lesson-num {
+    font-size: 0.65rem;
+    color: #4a6888;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+}
+
+.lv-lesson-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #d0e8ff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lv-lesson-desc {
+    font-size: 0.72rem;
+    color: #5a7898;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lv-lesson-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.lv-lesson-xp {
+    font-size: 0.7rem;
+    color: #f0c040;
+    font-weight: 700;
+}
+
+.lv-lesson-stars {
+    font-size: 0.82rem;
+    letter-spacing: -1px;
+}
+
+.lv-lesson-stars .s-earned { color: #f0c040; }
+.lv-lesson-stars .s-empty  { color: #2a3a4a; }
+
+/* ── Navigation bar (lesson view) ─────────────────────────────────── */
+.lv-nav {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px 12px;
+    border-top: 1px solid rgba(100, 160, 255, 0.08);
+    flex-shrink: 0;
+    background: rgba(8, 8, 16, 0.8);
+}
+
+.lv-btn {
+    flex: 1;
+    padding: 11px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.83rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s, transform 0.1s;
+}
+
+.lv-btn:active { transform: scale(0.97); }
+.lv-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+.lv-btn-primary {
+    background: linear-gradient(135deg, #4a9eff, #7b5ea7);
+    color: #fff;
+}
+
+.lv-btn-secondary {
+    background: rgba(100, 160, 255, 0.1);
+    border: 1px solid rgba(100, 160, 255, 0.2);
+    color: #7ab8ff;
+}
+
+.lv-btn-success {
+    background: linear-gradient(135deg, #50c878, #2e8a55);
+    color: #fff;
+}
+
+/* ── Metronome bar ────────────────────────────────────────────────── */
+.metronome-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(100, 160, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.metronome-bar.hidden { display: none; }
+
+.metro-beats {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+}
+
+.metro-beat {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(100, 160, 255, 0.12);
+    border: 1px solid rgba(100, 160, 255, 0.2);
+    transition: background 0.05s, transform 0.05s;
+}
+
+.metro-beat.down {
+    background: #4a9eff;
+    transform: scale(1.3);
+    box-shadow: 0 0 8px rgba(74, 158, 255, 0.6);
+}
+
+.metro-beat:nth-child(1).down {
+    background: #ffa032;
+    box-shadow: 0 0 8px rgba(255, 160, 50, 0.6);
+}
+
+.metro-bpm-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.metro-bpm-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(100, 160, 255, 0.1);
+    border: 1px solid rgba(100, 160, 255, 0.2);
+    color: #7a9ab8;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.metro-bpm-btn:hover { background: rgba(100, 160, 255, 0.2); }
+
+.metro-bpm-val {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #7a9ab8;
+    min-width: 36px;
+    text-align: center;
+}
+
+/* ── Practice controls row ────────────────────────────────────────── */
+.practice-controls-row {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    padding: 6px 12px;
+    flex-shrink: 0;
+}
+
+/* ── Animations ───────────────────────────────────────────────────── */
+@keyframes slideUp {
+    from { transform: translateY(12px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Confetti canvas (result screen) ─────────────────────────────── */
+.confetti-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 400;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .lv-theory-heading { font-size: 0.95rem; }
+    .lv-result-score   { font-size: 2.5rem; }
+    .lv-result-stars   { font-size: 2rem; }
+}
