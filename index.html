@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Piano Coach</title>
+    <!-- Tone.js for better audio synthesis (CDN, cached offline via SW) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"
+        crossorigin="anonymous" defer></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d0d17">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,6 +15,7 @@
     <link rel="stylesheet" href="css/lesson.css">
     <link rel="stylesheet" href="css/app-shell.css">
     <link rel="stylesheet" href="css/learn-view.css">
+    <link rel="stylesheet" href="css/theory-cards.css">
 </head>
 <body>
 
@@ -103,11 +107,12 @@
                 </div>
             </div>
 
-            <!-- Tabs: Piano / Chords / Theory -->
+            <!-- Tabs: Piano / Chords / Songs / MIDI Test / Theory -->
             <div class="practice-tabs" role="tablist">
                 <button class="practice-tab active" data-ptab="piano">🎹 Đàn</button>
                 <button class="practice-tab" data-ptab="chords">🎼 Hợp âm</button>
                 <button class="practice-tab" data-ptab="songs">🎵 Đệm nhạc</button>
+                <button class="practice-tab" data-ptab="midi">🎛️ MIDI Test</button>
                 <button class="practice-tab" data-ptab="theory">📖 Lý thuyết</button>
             </div>
 
@@ -229,6 +234,11 @@
                 <div id="chord-tab-song" style="flex:1;min-height:0;overflow-y:auto;padding:12px;width:100%;"></div>
             </div>
 
+            <!-- MIDI Tester tab -->
+            <div class="practice-stage hidden" id="practice-midi-tab">
+                <div id="midi-tester-container" style="flex:1;min-height:0;overflow-y:auto;width:100%"></div>
+            </div>
+
             <!-- Theory tab -->
             <div class="practice-stage hidden" id="practice-theory-tab">
                 <div style="flex:1;min-height:0;overflow-y:auto;padding:12px;width:100%;">
@@ -311,6 +321,10 @@
 <script src="js/views/homeView.js"></script>
 <script src="js/views/learnView.js"></script>
 <script src="js/views/profileView.js"></script>
+<script src="js/theoryRenderer.js"></script>
+<script src="js/midiTester.js"></script>
+<script src="js/adaptiveEngine.js"></script>
+<script src="js/comboSystem.js"></script>
 <script src="js/views/onboarding.js"></script>
 <script src="js/views/songsView.js"></script>
 <script src="js/appShell.js"></script>

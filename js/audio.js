@@ -1,13 +1,12 @@
 /**
  * AudioEngine — hybrid piano synthesizer.
  *
- * Strategy:
- *   1. Try to load piano audio samples from /audio/piano/ (C2–C7, mp3).
- *      Uses playbackRate pitch-shifting between sampled notes.
- *   2. If samples not available (404 / no server), falls back to the
- *      existing multi-oscillator synthesizer — no silent failure.
+ * Strategy (priority order):
+ *   1. Tone.js PolySynth (if Tone.js CDN loaded) — rich, warm sound
+ *   2. Local piano samples from /audio/piano/ (C2–C7.mp3)
+ *   3. Multi-oscillator fallback — always works, no network needed
  *
- * Both modes expose the same API:
+ * API:
  *   AudioEngine.startNote(noteId, midi)
  *   AudioEngine.stopNote(noteId)
  *   AudioEngine.isUsingSamples()
@@ -16,6 +15,47 @@ const AudioEngine = (() => {
     let _ctx        = null;
     let _masterGain = null;
     const _active   = new Map();
+
+    // ── Tone.js integration ────────────────────────────────────────
+    let _toneSynth = null;
+    let _toneReady = false;
+
+    function _initTone() {
+        if (_toneReady || typeof Tone === 'undefined') return false;
+        try {
+            _toneSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'triangle' },
+                envelope: {
+                    attack:  0.005,
+                    decay:   0.4,
+                    sustain: 0.3,
+                    release: 1.5,
+                },
+                volume: -6
+            }).toDestination();
+            _toneReady = true;
+            return true;
+        } catch { return false; }
+    }
+
+    function _toneStart(midi) {
+        if (!_toneReady) _initTone();
+        if (!_toneReady) return false;
+        try {
+            if (Tone.context.state === 'suspended') Tone.context.resume();
+            const freq = Tone.Frequency(midi, 'midi').toFrequency();
+            _toneSynth.triggerAttack(freq, Tone.now());
+            return true;
+        } catch { return false; }
+    }
+
+    function _toneStop(midi) {
+        if (!_toneReady) return;
+        try {
+            const freq = Tone.Frequency(midi, 'midi').toFrequency();
+            _toneSynth.triggerRelease(freq, Tone.now());
+        } catch {}
+    }
 
     // ── Sampler state ──────────────────────────────────────────────
     // Sampled notes: one sample per octave (C2–C7 = midi 36,48,60,72,84)
@@ -193,7 +233,10 @@ const AudioEngine = (() => {
 
     // ── Public API ─────────────────────────────────────────────────
     function startNote(noteId, midi) {
-        if (_samplesLoaded) {
+        // Priority: Tone.js > samples > oscillator
+        if (_toneStart(midi)) {
+            _active.set(noteId, { type: 'tone', midi });
+        } else if (_samplesLoaded) {
             _startSample(noteId, midi);
         } else {
             _startOscillator(noteId, midi);
@@ -209,14 +252,17 @@ const AudioEngine = (() => {
     function stopNote(noteId) {
         if (!_active.has(noteId)) return;
         const entry = _active.get(noteId);
-        if (entry.type === 'sample') {
+        if (entry.type === 'tone') {
+            _toneStop(entry.midi);
+            _active.delete(noteId);
+        } else if (entry.type === 'sample') {
             _stopSample(noteId);
         } else {
             _stopOscillator(noteId);
         }
     }
 
-    function isUsingSamples() { return _samplesLoaded; }
+    function isUsingSamples() { return _samplesLoaded || _toneReady; }
 
     return { startNote, stopNote, loadSamples, isUsingSamples };
 })();

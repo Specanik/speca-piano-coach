@@ -8,8 +8,8 @@ const HomeView = (() => {
         const el = document.getElementById('home-content');
         if (!el) return;
 
-        const stats   = ProgressStore.getStats();
-        const lessons = LessonsData.getAll();
+        const stats    = ProgressStore.getStats();
+        const lessons  = LessonsData.getAll();
         const progress = ProgressStore.getProgress();
 
         // Find current lesson (first incomplete)
@@ -20,10 +20,40 @@ const HomeView = (() => {
         const totalCompleted  = stats.totalCompleted;
         const overallProgress = Math.round((totalCompleted / lessons.length) * 100);
 
+        // Adaptive suggestion
+        const suggestion = (typeof AdaptiveEngine !== 'undefined')
+            ? AdaptiveEngine.getSuggestion() : null;
+
+        // Daily challenge
+        const daily = (typeof AdaptiveEngine !== 'undefined' && typeof SongsData !== 'undefined')
+            ? AdaptiveEngine.getDailyChallenge() : null;
+
+        const suggestionHTML = suggestion && suggestion.type !== 'start' ? `
+            <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;
+                background:rgba(74,158,255,0.07);border:1px solid rgba(74,158,255,0.15);
+                border-radius:10px;margin:0 0 10px;font-size:0.78rem;color:#8ab8d8;line-height:1.5">
+                <span style="flex-shrink:0;font-size:1.1rem">💡</span>
+                <div>${suggestion.message}</div>
+            </div>` : '';
+
+        const dailyHTML = daily ? `
+            <div style="background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.2);
+                border-radius:12px;padding:12px 14px;margin:0 0 10px;cursor:pointer"
+                id="daily-challenge-card">
+                <div style="font-size:0.65rem;font-weight:700;color:#f0c040;text-transform:uppercase;
+                    letter-spacing:0.08em;margin-bottom:5px">⭐ Thử thách hôm nay</div>
+                <div style="font-size:0.88rem;font-weight:700;color:#e0eaff">
+                    ${daily.song?.thumbnail || '🎵'} ${daily.song?.title || 'Bài hát ngẫu nhiên'}
+                </div>
+                <div style="font-size:0.72rem;color:#8a9aaa;margin-top:3px">💡 ${daily.tip}</div>
+            </div>` : '';
+
         el.innerHTML = `
             <div class="home-view">
                 <div class="home-hero">
                     <div class="home-greeting">${_greeting()}</div>
+
+                    ${suggestionHTML}
 
                     <div class="home-cta-card" id="home-cta">
                         <div class="home-cta-badge">⚡ Tiếp tục học</div>
@@ -39,6 +69,8 @@ const HomeView = (() => {
                             🎹 Bắt đầu học
                         </button>
                     </div>
+
+                    ${dailyHTML}
                 </div>
 
                 <div class="home-stats-row">
@@ -69,6 +101,17 @@ const HomeView = (() => {
         // Events
         document.getElementById('home-start-btn')?.addEventListener('click', () => {
             _startLesson(currentLesson.id);
+        });
+
+        document.getElementById('daily-challenge-card')?.addEventListener('click', () => {
+            if (daily?.song) {
+                Router.go('practice');
+                setTimeout(() => {
+                    // Switch to songs tab and start playing
+                    const songsBtn = document.querySelector('[data-ptab="songs"]');
+                    songsBtn?.click();
+                }, 100);
+            }
         });
 
         document.getElementById('home-view-all')?.addEventListener('click', () => {

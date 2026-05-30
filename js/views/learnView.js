@@ -1,75 +1,73 @@
 /**
  * LearnView — full-screen lesson UI.
- * Replaces the old modal-based LessonUI.
- * Renders inside #learn-view, talks to LessonEngine.
+ *
+ * Smart diff-render: only re-renders when the step index or phase changes.
+ * Within-step updates (practice feedback, sequence progress) patch specific
+ * DOM nodes — no piano remount, no FallingNotes restart on every note press.
  */
 const LearnView = (() => {
-    let _quizAnswered  = false;
-    let _resultData    = null;
-    let _pianoCanvas   = null;
-    let _pianoNoteMap  = {};
-    let _fallingActive = false;
-    let _waitMode      = true;
-    let _currentState  = null;
+    let _quizAnswered   = false;
+    let _resultData     = null;
+    let _pianoNoteMap   = {};
+    let _renderedPhase  = null;
+    let _renderedStep   = -1;   // stepIndex of last full render
 
     // ── Init ───────────────────────────────────────────────────────
     function init() {
-        LessonEngine.onStateChange(state => {
-            _currentState = state;
-            _render(state);
-        });
+        LessonEngine.onStateChange(state => _smartRender(state));
     }
 
-    // ── Navigate to learn view and show lesson list ────────────────
+    // ── Navigate to learn view → show lesson list ──────────────────
     function showList() {
+        _renderedPhase = null; _renderedStep = -1;
         const el = document.getElementById('learn-view');
-        if (!el) return;
-        _renderLessonList(el);
+        if (el) _renderLessonList(el);
     }
 
     // ── Start a specific lesson ────────────────────────────────────
     function startLesson(lessonId) {
         _quizAnswered = false;
         _resultData   = null;
+        _renderedPhase = null; _renderedStep = -1;
         FallingNotes.stop();
-        _fallingActive = false;
         LessonEngine.startLesson(lessonId);
     }
 
-    // ── Main render dispatcher ─────────────────────────────────────
-    function _render(state) {
+    // ── Smart render dispatcher ────────────────────────────────────
+    function _smartRender(state) {
         const el = document.getElementById('learn-view');
         if (!el) return;
 
-        if (state.phase === 'idle') {
-            _renderLessonList(el);
-            return;
-        }
+        if (state.phase === 'idle') { _renderLessonList(el); return; }
+        if (state.phase === 'result') { _renderResult(el, state); return; }
 
-        if (state.phase === 'result') {
-            _renderResult(el, state);
-            return;
-        }
+        const stepChanged = state.stepIndex !== _renderedStep
+            || state.phase !== _renderedPhase;
 
-        _renderStep(el, state);
+        if (stepChanged) {
+            _renderedPhase = state.phase;
+            _renderedStep  = state.stepIndex;
+            _renderStep(el, state);
+        } else {
+            // Partial update — only update feedback/progress elements
+            _patchStep(state);
+        }
     }
 
     // ── Lesson list ────────────────────────────────────────────────
     function _renderLessonList(el) {
-        const lessons = LessonsData.getAll();
+        const lessons  = LessonsData.getAll();
         const progress = ProgressStore.getProgress();
 
         el.innerHTML = `
             <div class="lv-header">
-                <span class="top-bar-logo-icon" style="font-size:1.3rem">🎹</span>
+                <span style="font-size:1.3rem">🎹</span>
                 <span class="lv-title">Tất cả bài học</span>
             </div>
             <div class="lv-lesson-list">
                 ${lessons.map((l, i) => {
                     const r = progress.completedLessons[l.id];
                     const stars = r?.stars || 0;
-                    const earned = '★'.repeat(stars);
-                    const empty  = '☆'.repeat(3 - stars);
                     return `
                         <button class="lv-lesson-card ${r ? 'completed' : ''}" data-id="${l.id}">
                             <div class="lv-lesson-thumb">${l.thumbnail}</div>
@@ -81,7 +79,8 @@ const LearnView = (() => {
                             <div class="lv-lesson-meta">
                                 <div class="lv-lesson-xp">+${l.xp} XP</div>
                                 <div class="lv-lesson-stars">
-                                    <span class="s-earned">${earned}</span><span class="s-empty">${empty}</span>
+                                    <span class="s-earned">${'★'.repeat(stars)}</span>
+                                    <span class="s-empty">${'☆'.repeat(3 - stars)}</span>
                                 </div>
                             </div>
                         </button>`;
@@ -93,25 +92,17 @@ const LearnView = (() => {
         });
     }
 
-    // ── Active step ────────────────────────────────────────────────
+    // ── Full step render (only on step change) ─────────────────────
     function _renderStep(el, state) {
         const step = state.step;
         if (!step) return;
 
-        const badgeClass  = `lv-badge-${step.type}`;
-        const badgeLabels = {
-            theory:   '📖 Lý thuyết',
-            practice: '🎹 Luyện ngón',
-            play:     '🎵 Ghép nhạc',
-            quiz:     '❓ Kiểm tra'
-        };
-
-        const stepDots = Array.from({ length: state.totalSteps }, (_, i) => {
-            const cls = i < state.stepIndex ? 'done' : i === state.stepIndex ? 'current' : '';
-            return `<div class="lv-step-seg ${cls}"></div>`;
-        }).join('');
-
+        const badgeLabels = { theory:'📖 Lý thuyết', practice:'🎹 Luyện ngón', play:'🎵 Ghép nhạc', quiz:'❓ Kiểm tra' };
         const isLast = state.stepIndex >= state.totalSteps - 1;
+
+        const stepDots = Array.from({ length: state.totalSteps }, (_, i) =>
+            `<div class="lv-step-seg ${i < state.stepIndex ? 'done' : i === state.stepIndex ? 'current' : ''}"></div>`
+        ).join('');
 
         el.innerHTML = `
             <div class="lv-header">
@@ -120,7 +111,7 @@ const LearnView = (() => {
                 <button class="lv-close-btn" id="lv-close">✕</button>
             </div>
             <div class="lv-step-bar">${stepDots}</div>
-            <div class="lv-step-badge ${badgeClass}">${badgeLabels[step.type] || step.type}</div>
+            <div class="lv-step-badge lv-badge-${step.type}">${badgeLabels[step.type] || step.type}</div>
             <div class="lv-content" id="lv-step-content"></div>
             <div class="lv-nav" id="lv-nav">
                 ${state.stepIndex > 0
@@ -132,95 +123,139 @@ const LearnView = (() => {
                 </button>
             </div>`;
 
-        // Render step content
         const content = document.getElementById('lv-step-content');
         if (content) _renderStepContent(content, state);
 
-        // Events
         document.getElementById('lv-back')
-            ?.addEventListener('click', () => {
-                FallingNotes.stop(); _fallingActive = false;
-                showList();
-            });
+            ?.addEventListener('click', () => { FallingNotes.stop(); showList(); });
         document.getElementById('lv-close')
-            ?.addEventListener('click', () => {
-                FallingNotes.stop(); _fallingActive = false;
-                Router.go('home');
-                setTimeout(() => HomeView.render(), 100);
-            });
+            ?.addEventListener('click', () => { FallingNotes.stop(); Router.go('home'); setTimeout(() => HomeView.render(), 100); });
         document.getElementById('lv-prev')
-            ?.addEventListener('click', () => { FallingNotes.stop(); LessonEngine.prevStep(); });
+            ?.addEventListener('click', () => { FallingNotes.stop(); _renderedStep = -1; LessonEngine.prevStep(); });
         document.getElementById('lv-next')
             ?.addEventListener('click', () => {
-                FallingNotes.stop(); _fallingActive = false;
+                FallingNotes.stop();
                 if (isLast) {
                     const summary = LessonEngine.endLesson();
                     _handleEnd(state.lessonId, summary);
                 } else {
                     _quizAnswered = false;
+                    _renderedStep = -1;
                     LessonEngine.nextStep();
                 }
             });
     }
 
-    function _renderStepContent(container, state) {
+    // ── Partial patch (same step, data changed) ────────────────────
+    function _patchStep(state) {
         const step = state.step;
-        switch (step.type) {
-            case 'theory':   _renderTheory(container, step);           break;
-            case 'practice': _renderPractice(container, step, state);  break;
-            case 'play':     _renderPlay(container, step, state);      break;
-            case 'quiz':     _renderQuiz(container, step, state);      break;
+        if (!step) return;
+
+        if (step.type === 'practice') {
+            const last = state.attempts[state.attempts.length - 1];
+            const fb = document.getElementById('lv-prac-feedback');
+            if (fb && last) {
+                const ok = last.score >= 65;
+                fb.className = `lv-feedback ${ok ? 'correct' : 'wrong'}`;
+                fb.textContent = ok
+                    ? `✅ ${Scorer.gradeLabel(last.score)} — ${last.score}/100`
+                    : '❌ Thử lại — nhớ nhấn đúng nốt';
+
+                // Enable Next button once correct
+                if (ok) {
+                    const btn = document.getElementById('lv-next');
+                    if (btn) btn.disabled = false;
+                }
+            }
+        }
+
+        if (step.type === 'play') {
+            // Update sequence dots without re-mounting piano or restarting FallingNotes
+            const idx  = state.sequenceIdx;
+            const seq  = step.sequence || [];
+            const dots = document.querySelectorAll('.lv-seq-dot');
+            dots.forEach((d, i) => {
+                d.className = `lv-seq-dot ${i < idx ? 'done' : i === idx ? 'current' : ''}`;
+            });
+            const txt = document.querySelector('.lv-seq-progress-text');
+            if (txt) txt.textContent = `${idx}/${seq.length}`;
+
+            // Update FallingNotes for current step
+            if (idx < seq.length) {
+                const next = Array.isArray(seq[idx].midi) ? seq[idx].midi : [seq[idx].midi];
+                NoteHighlighter.setTarget(next);
+                NoteHighlighter.showTargetHints();
+            }
+
+            // Enable Next when sequence done
+            if (idx >= seq.length) {
+                const btn = document.getElementById('lv-next');
+                if (btn) btn.disabled = false;
+            }
         }
     }
 
-    // ── Theory ────────────────────────────────────────────────────
+    // ── Step content render ────────────────────────────────────────
+    function _renderStepContent(container, state) {
+        switch (state.step.type) {
+            case 'theory':   _renderTheory(container, state.step);          break;
+            case 'practice': _renderPractice(container, state.step, state); break;
+            case 'play':     _renderPlay(container, state.step, state);     break;
+            case 'quiz':     _renderQuiz(container, state.step, state);     break;
+        }
+    }
+
+    // ── Theory step — visual card format via TheoryRenderer ──────
     function _renderTheory(container, step) {
+        const enhanced = (typeof TheoryRenderer !== 'undefined')
+            ? TheoryRenderer.enhance(step.content || '', step)
+            : step.content || '';
+
         container.innerHTML = `
             <div class="lv-theory">
                 <h2 class="lv-theory-heading">${step.title}</h2>
-                <div class="lv-theory-body">${step.content || ''}</div>
+                <div class="lv-theory-body theory-visual-body">${enhanced}</div>
             </div>`;
+
+        // Bind interactive events (play buttons, key clicks)
+        if (typeof TheoryRenderer !== 'undefined') {
+            TheoryRenderer.bindEvents(container.querySelector('.lv-theory-body'));
+        }
     }
 
-    // ── Practice ──────────────────────────────────────────────────
+    // ── Practice step ──────────────────────────────────────────────
     function _renderPractice(container, step, state) {
         const last = state.attempts[state.attempts.length - 1];
-        let feedbackClass = 'waiting';
-        let feedbackMsg   = '🎹 Nhấn các phím được tô sáng';
-
-        if (last) {
-            feedbackClass = last.score >= 65 ? 'correct' : 'wrong';
-            feedbackMsg   = last.score >= 65
-                ? `✅ ${Scorer.gradeLabel(last.score)} — ${last.score}/100`
-                : `❌ Thử lại — nhớ nhấn đúng nốt`;
-        }
+        const fbClass = last ? (last.score >= 65 ? 'correct' : 'wrong') : 'waiting';
+        const fbMsg   = last
+            ? (last.score >= 65 ? `✅ ${Scorer.gradeLabel(last.score)} — ${last.score}/100` : '❌ Thử lại')
+            : '🎹 Nhấn các phím được tô sáng';
 
         container.innerHTML = `
             <div class="lv-practice">
                 <div class="lv-practice-instruction">${step.content || ''}</div>
                 ${step.hint ? `<div class="lv-practice-hint">💡 ${step.hint}</div>` : ''}
-                <div class="lv-feedback ${feedbackClass}" id="lv-prac-feedback">${feedbackMsg}</div>
-                <div class="lv-piano-area" id="lv-piano-area"></div>
+                <div class="lv-feedback ${fbClass}" id="lv-prac-feedback">${fbMsg}</div>
+                <div class="lv-piano-area" id="lv-piano-practice" style="flex:1;min-height:0"></div>
             </div>`;
 
-        _mountPiano(document.getElementById('lv-piano-area'), '36');
+        _mountPiano('lv-piano-practice', '36');
 
-        // Set target highlights
-        const targets = Array.isArray(step.notes[0]) ? step.notes[0] : step.notes || [];
+        const targets = Array.isArray(step.notes?.[0]) ? step.notes[0] : (step.notes || []);
         NoteHighlighter.setTarget(targets);
         NoteHighlighter.showTargetHints();
     }
 
-    // ── Play ───────────────────────────────────────────────────────
+    // ── Play step (falling notes) ──────────────────────────────────
     function _renderPlay(container, step, state) {
         const seq  = step.sequence || [];
         const bpm  = step.bpm || 70;
+        const idx  = state.sequenceIdx;
 
-        const dotCount = Math.min(seq.length, 16);
-        const seqDots  = Array.from({ length: dotCount }, (_, i) => {
-            const cls = i < state.sequenceIdx ? 'done' : i === state.sequenceIdx ? 'current' : '';
-            return `<div class="lv-seq-dot ${cls}"></div>`;
-        }).join('');
+        const dotCount = Math.min(seq.length, 20);
+        const dots = Array.from({ length: dotCount }, (_, i) =>
+            `<div class="lv-seq-dot ${i < idx ? 'done' : i === idx ? 'current' : ''}"></div>`
+        ).join('');
 
         container.innerHTML = `
             <div class="lv-play">
@@ -231,16 +266,17 @@ const LearnView = (() => {
                     <span class="lv-bpm-display">♩= ${bpm} BPM</span>
                 </div>
                 <div class="lv-seq-progress">
-                    ${seqDots}
-                    <span class="lv-seq-progress-text">${state.sequenceIdx}/${seq.length}</span>
+                    ${dots}
+                    <span class="lv-seq-progress-text">${idx}/${seq.length}</span>
                 </div>
-                <div class="lv-falling-area" id="lv-falling-area">
-                    <canvas id="falling-canvas"></canvas>
+                <div id="lv-falling-area" style="flex:1;min-height:0;position:relative;background:rgba(0,0,0,0.4)">
+                    <canvas id="falling-canvas-lv" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
                 </div>
-                <div class="lv-piano-area" id="lv-piano-area-play" style="height:220px;flex-shrink:0"></div>
+                <div id="lv-piano-play" style="height:210px;flex-shrink:0;overflow:hidden;
+                    display:flex;align-items:center;justify-content:center;background:rgba(10,10,20,0.8)">
+                </div>
             </div>`;
 
-        // Wait mode toggle
         document.getElementById('wait-mode-btn')?.addEventListener('click', e => {
             _waitMode = !_waitMode;
             e.currentTarget.classList.toggle('active', _waitMode);
@@ -248,33 +284,30 @@ const LearnView = (() => {
         });
 
         // Mount piano
-        _mountPiano(document.getElementById('lv-piano-area-play'), '36');
+        _mountPiano('lv-piano-play', '36');
 
         // Init falling notes
-        const fallingArea = document.getElementById('lv-falling-area');
-        const canvas      = document.getElementById('falling-canvas');
-        if (canvas && fallingArea) {
-            canvas.width  = fallingArea.clientWidth  || 400;
-            canvas.height = fallingArea.clientHeight || 160;
-            canvas.style.width  = '100%';
-            canvas.style.height = '100%';
+        const area   = document.getElementById('lv-falling-area');
+        const canvas = document.getElementById('falling-canvas-lv');
+        if (canvas && area) {
+            // Use ResizeObserver for correct sizing
+            const setSize = () => {
+                canvas.width  = area.clientWidth  || 400;
+                canvas.height = area.clientHeight || 180;
+            };
+            setSize();
+            new ResizeObserver(setSize).observe(area);
 
             FallingNotes.init(canvas, _pianoNoteMap);
             FallingNotes.setWaitMode(_waitMode);
             FallingNotes.loadSequence(seq, bpm);
-            FallingNotes.start();
-            _fallingActive = true;
-
-            FallingNotes.onStepComplete((idx, result) => {
-                NoteHighlighter.noteOn(result.midi[0]);
-                setTimeout(() => NoteHighlighter.noteOff(result.midi[0]), 200);
-            });
 
             FallingNotes.onSequenceEnd(() => {
-                // Auto-enable Next button
                 const btn = document.getElementById('lv-next');
                 if (btn) btn.disabled = false;
             });
+
+            FallingNotes.start();
         }
 
         // Set first target
@@ -285,8 +318,10 @@ const LearnView = (() => {
         }
     }
 
-    // ── Quiz ───────────────────────────────────────────────────────
-    function _renderQuiz(container, step, state) {
+    let _waitMode = true;
+
+    // ── Quiz step ──────────────────────────────────────────────────
+    function _renderQuiz(container, step) {
         const q = step.question;
         if (!q) return;
 
@@ -316,7 +351,6 @@ const LearnView = (() => {
                     else if (i === idx && !result.correct) b.classList.add('wrong');
                 });
 
-                // Show explanation / enable Next
                 const nextBtn = document.getElementById('lv-next');
                 if (nextBtn) nextBtn.disabled = false;
 
@@ -335,7 +369,6 @@ const LearnView = (() => {
     function _handleEnd(lessonId, summary) {
         const { newBadges } = ProgressStore.completeLesson(lessonId, summary);
         _resultData = { summary, newBadges, lessonId };
-        // LessonEngine fires 'result' phase → _render → _renderResult
     }
 
     function _renderResult(el, state) {
@@ -344,7 +377,6 @@ const LearnView = (() => {
         const lesson = LessonsData.getById(lessonId);
         const xpGain = lesson ? Math.round(lesson.xp * (summary.totalScore / 100)) : 0;
         const stars  = summary.stars;
-        const grade  = Scorer.gradeLabel(summary.totalScore);
 
         const badgesHTML = newBadges.length ? `
             <div class="lv-result-badges">
@@ -365,7 +397,7 @@ const LearnView = (() => {
                     <div class="lv-result-title">Bài học hoàn thành!</div>
                     <div class="lv-result-stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
                     <div class="lv-result-score">${summary.totalScore}</div>
-                    <div class="lv-result-grade">${grade}</div>
+                    <div class="lv-result-grade">${Scorer.gradeLabel(summary.totalScore)}</div>
                     <div class="lv-result-xp">⚡ +${xpGain} XP</div>
                     ${badgesHTML}
                     <div class="lv-result-actions">
@@ -375,29 +407,21 @@ const LearnView = (() => {
                 </div>
             </div>`;
 
-        // Confetti for 3 stars
         if (stars === 3) _confetti();
-
-        // Update top bar stats
         AppShell?.updateStats?.();
 
-        document.getElementById('result-retry')
-            ?.addEventListener('click', () => startLesson(lessonId));
-        document.getElementById('result-home')
-            ?.addEventListener('click', () => {
-                Router.go('home');
-                setTimeout(() => HomeView.render(), 100);
-            });
+        document.getElementById('result-retry')?.addEventListener('click', () => startLesson(lessonId));
+        document.getElementById('result-home')?.addEventListener('click', () => {
+            Router.go('home'); setTimeout(() => HomeView.render(), 100);
+        });
     }
 
-    // ── Piano helper ───────────────────────────────────────────────
-    function _mountPiano(container, layout) {
+    // ── Piano mount helper ─────────────────────────────────────────
+    function _mountPiano(containerId, layout) {
+        const container = document.getElementById(containerId);
         if (!container) return;
-        // Keyboard.render needs an element ID — ensure the container has one
-        if (!container.id) container.id = 'lv-piano-' + Date.now();
         Visualizer.destroy();
-        const { canvas, noteMap } = Keyboard.render(container.id, layout);
-        _pianoCanvas  = canvas;
+        const { canvas, noteMap } = Keyboard.render(containerId, layout);
         _pianoNoteMap = noteMap;
         Visualizer.init(canvas, noteMap);
     }
@@ -409,8 +433,8 @@ const LearnView = (() => {
         canvas.width  = window.innerWidth;
         canvas.height = window.innerHeight;
         document.body.appendChild(canvas);
-        const ctx     = canvas.getContext('2d');
-        const pieces  = Array.from({ length: 80 }, () => ({
+        const ctx    = canvas.getContext('2d');
+        const pieces = Array.from({ length: 80 }, () => ({
             x: Math.random() * canvas.width,
             y: Math.random() * -canvas.height,
             r: Math.random() * 6 + 2,
@@ -420,21 +444,16 @@ const LearnView = (() => {
             vr: (Math.random() - 0.5) * 0.2,
             angle: Math.random() * Math.PI * 2,
         }));
-
         let frame = 0;
         const loop = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             pieces.forEach(p => {
                 p.x += p.vx; p.y += p.vy; p.angle += p.vr;
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.angle);
-                ctx.fillStyle = p.color;
-                ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
+                ctx.fillStyle = p.color; ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
                 ctx.restore();
             });
-            frame++;
-            if (frame < 120) requestAnimationFrame(loop);
+            if (++frame < 120) requestAnimationFrame(loop);
             else canvas.remove();
         };
         requestAnimationFrame(loop);

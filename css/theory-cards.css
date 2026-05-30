@@ -1,0 +1,331 @@
+/* ═══════════════════════════════════════════════════════════════════
+   THEORY VISUAL CARDS — Pedagogical redesign
+   Replace text-heavy HTML with visual concept cards.
+   Each concept = headline + visual + optional expand.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Override lv-theory-body for visual format */
+.theory-visual-body h3.theory-concept-h {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #e0eaff;
+    padding: 10px 14px 8px;
+    margin: 10px -18px 0;
+    background: rgba(100, 160, 255, 0.07);
+    border-top: 1px solid rgba(100, 160, 255, 0.12);
+    border-bottom: 1px solid rgba(100, 160, 255, 0.12);
+    cursor: default;
+}
+
+/* Concept summary pill */
+.concept-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, rgba(74,158,255,0.12), rgba(123,94,167,0.12));
+    border: 1px solid rgba(74,158,255,0.2);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #c0d8f0;
+    margin: 6px 0;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.concept-pill:hover { background: rgba(74,158,255,0.2); transform: scale(1.02); }
+
+/* Info box */
+.theory-box {
+    background: rgba(100, 160, 255, 0.06);
+    border: 1px solid rgba(100, 160, 255, 0.12);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 6px 0;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: #9ab8d0;
+}
+
+.theory-box.highlight {
+    background: rgba(80, 200, 120, 0.08);
+    border-color: rgba(80, 200, 120, 0.2);
+    color: #90d8b0;
+}
+
+.theory-box.warning {
+    background: rgba(255, 165, 50, 0.08);
+    border-color: rgba(255, 165, 50, 0.2);
+    color: #d8a060;
+}
+
+/* Mini-piano diagram */
+.mini-piano-diagram {
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    justify-content: center;
+    background: #141428;
+    border-radius: 10px;
+    padding: 14px 18px 16px;
+    margin: 8px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.mini-key-w {
+    width: 28px;
+    height: 72px;
+    background: linear-gradient(to bottom, #e8e4dc, #faf8f5);
+    border: 1px solid #aaa;
+    border-top: 2px solid #ccc;
+    border-radius: 0 0 5px 5px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 5px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: #888;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: background 0.15s, transform 0.05s;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.mini-key-w.hl {
+    background: linear-gradient(to bottom, #ffd700, #ffe44e) !important;
+    color: #664400;
+    box-shadow: 0 0 10px rgba(255, 200, 0, 0.5);
+    transform: scale(1.02);
+}
+
+.mini-key-w.hl-correct {
+    background: linear-gradient(to bottom, #50c878, #2a9050) !important;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(80, 200, 120, 0.5);
+}
+
+.mini-key-b {
+    width: 18px;
+    height: 45px;
+    background: linear-gradient(160deg, #2a2a2a, #111);
+    border-radius: 0 0 3px 3px;
+    margin: 0 -9px;
+    z-index: 2;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.mini-key-b.hl {
+    background: linear-gradient(160deg, #ff8c00, #aa5500) !important;
+    box-shadow: 0 0 8px rgba(255, 140, 0, 0.6);
+}
+
+/* Play chord button */
+.theory-play-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 16px;
+    background: linear-gradient(135deg, rgba(74,158,255,0.15), rgba(74,158,255,0.08));
+    border: 1px solid rgba(74,158,255,0.3);
+    border-radius: 20px;
+    color: #7ab8ff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, transform 0.1s;
+    margin: 6px 0;
+}
+
+.theory-play-btn:hover  { background: rgba(74,158,255,0.25); transform: scale(1.03); }
+.theory-play-btn:active { transform: scale(0.97); }
+
+/* Formula display */
+.theory-formula {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+}
+
+.theory-note-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: rgba(74,158,255,0.15);
+    border: 2px solid rgba(74,158,255,0.3);
+    color: #7ab8ff;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.15s;
+}
+
+.theory-note-badge:hover  { background: rgba(74,158,255,0.3); transform: scale(1.1); }
+.theory-note-badge.root   { background: rgba(255,165,50,0.2); border-color: rgba(255,165,50,0.5); color: #ffa032; }
+.theory-note-badge.third  { background: rgba(74,158,255,0.2); border-color: rgba(74,158,255,0.5); color: #7ab8ff; }
+.theory-note-badge.fifth  { background: rgba(80,200,120,0.2); border-color: rgba(80,200,120,0.5); color: #50c878; }
+.theory-note-badge.seventh{ background: rgba(200,100,255,0.2);border-color: rgba(200,100,255,0.5); color: #c064ff; }
+
+.formula-arrow {
+    color: rgba(100,160,255,0.4);
+    font-size: 0.8rem;
+}
+
+/* Collapsible detail */
+.theory-detail-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 0.75rem;
+    color: #4a9eff;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    margin: 2px 0;
+    transition: color 0.15s;
+}
+
+.theory-detail-toggle:hover { color: #7ab8ff; }
+
+.theory-detail-toggle::before {
+    content: '▶';
+    font-size: 0.6rem;
+    transition: transform 0.15s;
+}
+
+.theory-detail-toggle.open::before { transform: rotate(90deg); }
+
+.theory-detail-body {
+    display: none;
+    font-size: 0.78rem;
+    color: #7a9ab8;
+    line-height: 1.65;
+    padding: 6px 0 2px 14px;
+    border-left: 2px solid rgba(74,158,255,0.15);
+    margin-left: 4px;
+    margin-bottom: 6px;
+}
+
+.theory-detail-body.open { display: block; animation: fadeIn 0.2s ease; }
+
+/* Sound emoji row */
+.theory-sound-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(100,160,255,0.04);
+    border-radius: 8px;
+    margin: 6px 0;
+}
+
+.theory-sound-emoji { font-size: 1.4rem; }
+
+.theory-sound-text {
+    font-size: 0.78rem;
+    color: #7a9ab8;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+/* Table override */
+.theory-visual-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin: 8px 0;
+    background: rgba(10,10,20,0.4);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.theory-visual-body th {
+    padding: 7px 10px;
+    text-align: left;
+    background: rgba(100,160,255,0.1);
+    color: #7ab8ff;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.theory-visual-body td {
+    padding: 6px 10px;
+    color: #9ab8d0;
+    border-bottom: 1px solid rgba(100,160,255,0.06);
+}
+
+.theory-visual-body tr:last-child td { border-bottom: none; }
+
+/* Comparison card (major vs minor) */
+.theory-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.theory-compare-card {
+    background: rgba(100,160,255,0.06);
+    border: 1px solid rgba(100,160,255,0.12);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+}
+
+.theory-compare-card.major { border-color: rgba(74,158,255,0.25); }
+.theory-compare-card.minor { border-color: rgba(140,80,200,0.25); }
+
+.theory-compare-emoji { font-size: 1.5rem; }
+
+.theory-compare-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #d0e8ff;
+    margin: 4px 0 2px;
+}
+
+.theory-compare-desc {
+    font-size: 0.68rem;
+    color: #5a7898;
+    font-style: italic;
+}
+
+/* Progress reminder */
+.theory-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255,165,50,0.07);
+    border-left: 3px solid #ffa032;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.76rem;
+    color: #c8903a;
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

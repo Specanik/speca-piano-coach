@@ -1210,6 +1210,326 @@ const LessonsData = (() => {
                     }
                 }
             ]
+        },
+
+        // ══════════════════════════════════════════════════════════
+        //  ADVANCED (Bài 21-25)
+        // ══════════════════════════════════════════════════════════
+
+        {
+            id: 'lesson-21',
+            title: 'Modes — 7 Màu sắc âm nhạc',
+            description: 'Khám phá 7 mode từ gam C trưởng: Ionian, Dorian, Phrygian...',
+            thumbnail: '🌈',
+            xp: 200,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Mode là gì?',
+                    content: `
+                        <h3>7 Mode từ gam C trưởng</h3>
+                        <p>Mỗi mode là gam C trưởng nhưng bắt đầu từ bậc khác nhau.
+                        Mỗi mode có màu sắc cảm xúc hoàn toàn khác:</p>
+                        <table>
+                            <thead><tr><th>Mode</th><th>Bắt đầu từ</th><th>Cảm xúc</th></tr></thead>
+                            <tbody>
+                                <tr><td>Ionian (Major)</td><td>C</td><td>Sáng, vui</td></tr>
+                                <tr><td>Dorian</td><td>D</td><td>Jazz, funky</td></tr>
+                                <tr><td>Phrygian</td><td>E</td><td>Tây Ban Nha, căng</td></tr>
+                                <tr><td>Lydian</td><td>F</td><td>Mơ mộng, bay bổng</td></tr>
+                                <tr><td>Mixolydian</td><td>G</td><td>Blues, rock</td></tr>
+                                <tr><td>Aeolian (Minor)</td><td>A</td><td>Buồn, sâu lắng</td></tr>
+                                <tr><td>Locrian</td><td>B</td><td>Tối tăm, không ổn định</td></tr>
+                            </tbody>
+                        </table>
+                        <h3>Ứng dụng thực tế</h3>
+                        <p><strong>Dorian</strong>: Santeria (Sublime), So What (Miles Davis)<br>
+                        <strong>Lydian</strong>: Flying (John Williams), nhạc phim Disney<br>
+                        <strong>Mixolydian</strong>: Sweet Home Alabama, Norwegian Wood</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Chơi Dorian Mode',
+                    content: 'Dorian = D E F G A B C D — tất cả phím trắng từ D đến D. Thử nghe sự khác biệt!',
+                    notes: [D4, E4, F4, G4, A4, B4, C5, 74],
+                    hint: 'Giống gam Am nhưng bậc 6 cao hơn 1 phím (B thay vì Bb). Nghe "funky" hơn!'
+                },
+                {
+                    type: 'play',
+                    title: 'Dorian melody',
+                    content: 'Chơi gam Dorian — nghe sự khác biệt với Am và C trưởng.',
+                    sequence: [
+                        { midi: D4,  label: 'D', durationMs: 400 },
+                        { midi: F4,  label: 'F', durationMs: 400 },
+                        { midi: A4,  label: 'A', durationMs: 400 },
+                        { midi: C5,  label: 'C', durationMs: 400 },
+                        { midi: B4,  label: 'B', durationMs: 400 },
+                        { midi: A4,  label: 'A', durationMs: 400 },
+                        { midi: G4,  label: 'G', durationMs: 400 },
+                        { midi: D4,  label: 'D', durationMs: 700 },
+                    ],
+                    bpm: 90
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra Modes',
+                    question: {
+                        text: 'Mode nào được dùng nhiều trong nhạc Blues/Rock?',
+                        options: ['Lydian', 'Dorian', 'Mixolydian', 'Locrian'],
+                        correct: 2
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-22',
+            title: 'Chord Extensions: 9th, 11th, 13th',
+            description: 'Hợp âm jazz nâng cao — thêm màu sắc tươi phong phú cho nhạc.',
+            thumbnail: '🎷',
+            xp: 210,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Extended Chords',
+                    content: `
+                        <h3>Chord Extension là gì?</h3>
+                        <p>Tiếp tục thêm nốt vào hợp âm 7: bậc 9, 11, 13 (= bậc 2, 4, 6 cao hơn 1 octave).</p>
+                        <h3>Cmaj9 = C – E – G – B – D</h3>
+                        <p>Thêm nốt D (bậc 9) vào Cmaj7. Âm thanh "rộng mở, lộng lẫy".</p>
+                        <h3>Khi nào dùng?</h3>
+                        <p>Neo-soul (H.E.R., Daniel Caesar), R&B (Ariana Grande), Jazz (Bill Evans).<br>
+                        Thay vì Cmaj7 → dùng Cmaj9 để chord "bay" hơn.</p>
+                        <h3>Voicing thực tế</h3>
+                        <p>Không cần nhấn hết 5 nốt — bỏ bậc 5 (G) để giảm tay: C – E – B – D</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Luyện Cmaj9',
+                    content: 'Nhấn C4 – E4 – B4 – D5 (bỏ G để vừa tay).',
+                    notes: [C4, E4, B4, 74],
+                    hint: 'D5 = midi 74. Ngón 1-2-4-5 tay phải.'
+                },
+                {
+                    type: 'play',
+                    title: 'Vòng jazz với extended chords',
+                    content: 'Cmaj9 – Am9 – Fmaj9 – G13: vòng neo-soul phổ biến.',
+                    sequence: [
+                        { midi: [C4, E4, B4, 74],  label: 'Cmaj9',  durationMs: 900 },
+                        { midi: [A3, C4, E4, G4],   label: 'Am9',    durationMs: 900 },
+                        { midi: [F3, A3, E4, G4],   label: 'Fmaj9',  durationMs: 900 },
+                        { midi: [G3, B3, F4, A4],   label: 'G13',    durationMs: 900 },
+                    ],
+                    bpm: 58
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra extended chords',
+                    question: {
+                        text: 'Cmaj9 khác Cmaj7 ở điểm gì?',
+                        options: [
+                            'Cmaj9 bỏ nốt E',
+                            'Cmaj9 thêm nốt bậc 9 (D)',
+                            'Cmaj9 chỉ có 3 nốt',
+                            'Cmaj9 dùng nốt D♭'
+                        ],
+                        correct: 1
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-23',
+            title: 'Chord Substitution — Nghệ thuật thay thế',
+            description: 'Thay một hợp âm bằng hợp âm khác để tạo màu sắc mới.',
+            thumbnail: '🔀',
+            xp: 220,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Chord Substitution',
+                    content: `
+                        <h3>Tại sao thay thế hợp âm?</h3>
+                        <p>Cùng chức năng nhưng âm thanh phong phú hơn. Ví dụ:
+                        thay G7 bằng Db7 (tritone substitution) — jazz và R&B dùng rất nhiều!</p>
+                        <h3>Tritone Substitution</h3>
+                        <p>G và Db cách nhau đúng 6 phím (tritone). Chúng chia sẻ 2 nốt quan trọng:
+                        G7 = G–B–D–F | Db7 = Db–F–Ab–Cb<br>
+                        Cả hai đều có nốt F và B (or Cb) → nghe "resolve" tương tự về C!</p>
+                        <h3>Ứng dụng dễ dùng</h3>
+                        <p>Relative substitution: thay Am bằng C, thay Em bằng G (cùng họ nốt).
+                        Đây là cách đơn giản nhất để làm nhạc "jazz" hơn.</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Luyện: Relative Substitution',
+                    content: 'Nhấn C trưởng (C–E–G) rồi Em (E–G–B) — nghe sự tương đồng.',
+                    notes: [C4, E4, G4],
+                    hint: 'C và Em chia sẻ 2 nốt (E và G). Dùng hoán đổi nhau mà vẫn thuận tai!'
+                },
+                {
+                    type: 'play',
+                    title: 'Vòng với substitution',
+                    content: 'Chơi C–Am–F–G rồi thay Am bằng C, F bằng Am → C–C–Am–G',
+                    sequence: [
+                        { midi: [C4, E4, G4],  label: 'C',    durationMs: 700 },
+                        { midi: [A3, C4, E4],  label: 'Am',   durationMs: 700 },
+                        { midi: [F3, A3, C4],  label: 'F',    durationMs: 700 },
+                        { midi: [G3, B3, D4],  label: 'G',    durationMs: 700 },
+                        { midi: [C4, E4, G4],  label: 'C',    durationMs: 700 },
+                        { midi: [C4, E4, G4],  label: 'C→',   durationMs: 700 },
+                        { midi: [A3, C4, E4],  label: '→Am',  durationMs: 700 },
+                        { midi: [G3, B3, D4],  label: 'G',    durationMs: 900 },
+                    ],
+                    bpm: 65
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra Substitution',
+                    question: {
+                        text: 'Trong "relative substitution", C Major có thể thay thế hợp âm nào?',
+                        options: ['G Major', 'Am', 'Em', 'Dm'],
+                        correct: 1
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-24',
+            title: 'Phối hợp hai tay hoàn chỉnh',
+            description: 'Tay trái đánh chord pattern, tay phải đánh melody — đồng thời.',
+            thumbnail: '🤲',
+            xp: 250,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Hai tay độc lập',
+                    content: `
+                        <h3>Thách thức lớn nhất của Piano</h3>
+                        <p>Não bộ phải điều khiển 2 luồng độc lập: tay trái theo nhịp, tay phải theo melody.</p>
+                        <h3>Phương pháp học đúng</h3>
+                        <ol>
+                            <li>Học tay phải thuần thục (melody)</li>
+                            <li>Học tay trái thuần thục (chord/bass)</li>
+                            <li>Ghép chậm (50% tốc độ)</li>
+                            <li>Tăng dần tốc độ</li>
+                        </ol>
+                        <h3>Pattern tay trái phổ biến</h3>
+                        <p><strong>Alberti bass:</strong> bass – chord trên – chord giữa – chord trên<br>
+                        Ví dụ C: C3 – G3E4 – E3G3 – G3E4 (lặp lại)</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Tay trái: Alberti Bass pattern',
+                    content: 'Luyện pattern tay trái: C3 – E3 – G3 – E3 (4 phách lặp lại)',
+                    notes: [C3, E3, G3, E3],
+                    hint: 'Giữ tay trái thật ổn định và đều nhịp trước khi ghép tay phải.'
+                },
+                {
+                    type: 'play',
+                    title: 'Melody đơn giản (tay phải)',
+                    content: 'Chơi melody: C – E – G – A – G – E – C theo nhịp.',
+                    sequence: [
+                        { midi: C4, label: 'C', durationMs: 500 },
+                        { midi: E4, label: 'E', durationMs: 500 },
+                        { midi: G4, label: 'G', durationMs: 500 },
+                        { midi: A4, label: 'A', durationMs: 500 },
+                        { midi: G4, label: 'G', durationMs: 500 },
+                        { midi: E4, label: 'E', durationMs: 500 },
+                        { midi: C4, label: 'C', durationMs: 800 },
+                    ],
+                    bpm: 75
+                },
+                {
+                    type: 'quiz',
+                    title: 'Kiểm tra hai tay',
+                    question: {
+                        text: 'Phương pháp học đúng khi học ghép 2 tay là gì?',
+                        options: [
+                            'Ghép ngay từ đầu với tốc độ cao',
+                            'Học từng tay riêng trước, rồi ghép chậm, tăng dần',
+                            'Chỉ học tay phải là đủ',
+                            'Xem video rồi bắt chước'
+                        ],
+                        correct: 1
+                    }
+                }
+            ]
+        },
+
+        {
+            id: 'lesson-25',
+            title: 'Bài Tốt nghiệp: Tự soạn nhạc',
+            description: 'Dùng tất cả kiến thức đã học để soạn một đoạn nhạc 8 ô nhịp của riêng bạn.',
+            thumbnail: '🎓',
+            xp: 300,
+            steps: [
+                {
+                    type: 'theory',
+                    title: 'Soạn nhạc — Không khó như bạn nghĩ',
+                    content: `
+                        <h3>Công thức soạn nhạc đơn giản</h3>
+                        <p>Chọn 1 trong 3 công thức sau:</p>
+                        <table>
+                            <thead><tr><th>Công thức</th><th>Ví dụ</th><th>Phong cách</th></tr></thead>
+                            <tbody>
+                                <tr><td>I – V – vi – IV</td><td>C – G – Am – F</td><td>Pop, ballad</td></tr>
+                                <tr><td>i – VII – VI – VII</td><td>Am – G – F – G</td><td>Rock, nhạc Việt</td></tr>
+                                <tr><td>ii – V – I</td><td>Dm – G – C</td><td>Jazz</td></tr>
+                            </tbody>
+                        </table>
+                        <h3>Cách tạo melody</h3>
+                        <p>Dùng các nốt trong gam (hoặc pentatonic) + thêm "neighbor notes" (nốt liền kề)
+                        để tạo sự dịch chuyển mượt mà.</p>
+                        <h3>Chúc mừng! 🎉</h3>
+                        <p>Bạn đã hoàn thành 25 bài học — tương đương 3-6 tháng học với giáo viên!
+                        Hãy tiếp tục luyện tập và khám phá những bài nhạc bạn yêu thích.</p>
+                    `
+                },
+                {
+                    type: 'practice',
+                    title: 'Soạn câu mở đầu',
+                    content: 'Dùng các nốt C – E – G – A – G bất kỳ thứ tự bạn muốn. Không có câu trả lời sai!',
+                    notes: [C4, E4, G4, A4],
+                    hint: 'Hãy thử: bắt đầu từ G, dùng nốt liền kề C-D-E, kết thúc tại C.'
+                },
+                {
+                    type: 'play',
+                    title: 'Vòng chord cho bài soạn của bạn',
+                    content: 'Chơi vòng I-V-vi-IV (C-G-Am-F) — nền tảng cho hàng trăm bài hát.',
+                    sequence: [
+                        { midi: [C4, E4, G4], label: 'C',  durationMs: 800 },
+                        { midi: [G3, B3, D4], label: 'G',  durationMs: 800 },
+                        { midi: [A3, C4, E4], label: 'Am', durationMs: 800 },
+                        { midi: [F3, A3, C4], label: 'F',  durationMs: 800 },
+                        { midi: [C4, E4, G4], label: 'C',  durationMs: 800 },
+                        { midi: [G3, B3, D4], label: 'G',  durationMs: 800 },
+                        { midi: [A3, C4, E4], label: 'Am', durationMs: 800 },
+                        { midi: [F3, A3, C4], label: 'F',  durationMs: 1000 },
+                    ],
+                    bpm: 70
+                },
+                {
+                    type: 'quiz',
+                    title: '🎓 Câu hỏi cuối khóa',
+                    question: {
+                        text: 'Pentatonic minor rất phổ biến vì lý do gì?',
+                        options: [
+                            'Nó có nhiều nốt hơn gam trưởng',
+                            'Bất kỳ tổ hợp nốt nào cũng nghe hay — không có nốt xấu',
+                            'Nó chỉ dùng phím đen',
+                            'Nó là gam duy nhất trong nhạc jazz'
+                        ],
+                        correct: 1
+                    }
+                }
+            ]
         }
     ];
 
