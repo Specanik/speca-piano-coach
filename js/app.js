@@ -24,9 +24,26 @@ function closeSidebar() {
     document.getElementById('app').classList.remove('sidebar-open');
 }
 
+// ── MIDI / Mic indicator helpers ──────────────────────────────────────────
+function updateMidiIndicator(connected) {
+    const btn = document.getElementById('midi-toggle-btn');
+    if (!btn) return;
+    btn.classList.toggle('connected', connected);
+    btn.title = connected ? 'MIDI đã kết nối — click để ngắt' : 'Kết nối bàn phím MIDI';
+    btn.innerHTML = `<span class="midi-dot"></span>${connected ? 'MIDI ✓' : 'MIDI'}`;
+}
+
+function updateMicIndicator(active) {
+    const btn = document.getElementById('mic-toggle-btn');
+    if (!btn) return;
+    btn.classList.toggle('connected', active);
+    btn.innerHTML = active ? '🎤 Mic ✓' : '🎤 Mic';
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
     // Restore saved preferences
-    setTheme(localStorage.getItem('piano-theme')   || 'classic');
+    setTheme(localStorage.getItem('piano-theme') || 'classic');
     const savedLayout = localStorage.getItem('piano-layout') || '36';
 
     // Mobile sidebar controls
@@ -34,7 +51,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sidebar-close-btn')?.addEventListener('click', closeSidebar);
     document.getElementById('sidebar-backdrop')?.addEventListener('click', closeSidebar);
 
-    // Wire up controls
+    // Wire up theme + layout controls
     document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.addEventListener('click', () => setTheme(btn.dataset.theme));
     });
@@ -42,28 +59,71 @@ window.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => applyLayout(btn.dataset.layout));
     });
 
-    // Connect audio + visualizer to keyboard events (set once)
-    Keyboard.onNoteOnHandler(midi => {
+    // ── Initial keyboard render ──────────────────────────────────────────
+    try {
+        applyLayout(savedLayout);
+    } catch(e) {
+        console.error('applyLayout failed:', e);
+        showError('applyLayout ERROR: ' + e.message, 'purple');
+    }
+
+    // ── InputRouter wires keyboard → audio + visualizer ─────────────────
+    // LessonUI.init() will override these handlers for lesson mode.
+    // For free-play mode (no lesson active), route directly:
+    InputRouter.onNoteOn(midi => {
         AudioEngine.startNote(midi, midi);
         Visualizer.noteOn(midi);
     });
-    Keyboard.onNoteOffHandler(midi => {
+    InputRouter.onNoteOff(midi => {
         AudioEngine.stopNote(midi);
         Visualizer.noteOff(midi);
     });
+    InputRouter.attachKeyboard();
 
-    // Setup Chord UI
+    InputRouter.onStateChange(state => {
+        updateMidiIndicator(state.midi);
+        updateMicIndicator(state.mic);
+    });
+
+    // ── MIDI toggle ──────────────────────────────────────────────────────
+    let midiEnabled = false;
+    document.getElementById('midi-toggle-btn')?.addEventListener('click', async () => {
+        if (!MidiInput.isSupported()) {
+            alert('Web MIDI API không được hỗ trợ trên trình duyệt này.\nDùng Chrome hoặc Edge.');
+            return;
+        }
+        if (midiEnabled) {
+            InputRouter.disableMidi();
+            midiEnabled = false;
+        } else {
+            const ok = await InputRouter.enableMidi();
+            midiEnabled = ok;
+            if (!ok) alert('Không thể kết nối MIDI. Kiểm tra lại bàn phím và quyền truy cập.');
+        }
+    });
+
+    // ── Mic toggle ───────────────────────────────────────────────────────
+    let micEnabled = false;
+    document.getElementById('mic-toggle-btn')?.addEventListener('click', async () => {
+        if (micEnabled) {
+            InputRouter.disableMic();
+            micEnabled = false;
+        } else {
+            const ok = await InputRouter.enableMic();
+            micEnabled = ok;
+            if (!ok) alert('Không thể truy cập microphone. Kiểm tra quyền trong trình duyệt.');
+        }
+    });
+
+    // ── ChordUI setup ────────────────────────────────────────────────────
     try {
         ChordUI.init();
     } catch(e) {
         console.error('ChordUI.init failed:', e);
-        var errDiv = document.createElement('div');
-        errDiv.style.cssText = 'position:fixed;top:40px;left:0;right:0;background:orange;color:#000;padding:12px;z-index:9999;font:14px monospace;white-space:pre-wrap;';
-        errDiv.textContent = 'ChordUI.init ERROR: ' + e.message + '\n' + e.stack;
-        document.body.appendChild(errDiv);
+        showError('ChordUI ERROR: ' + e.message, 'orange');
     }
 
-    // Connect ChordPlayer to keyboard visualization (sync on/off per note)
+    // Sync ChordPlayer → keyboard highlight + visualizer
     let chordVisNotes = new Set();
     ChordPlayer.onNotesChangeHandler(midiNotes => {
         ChordUI.updateKeyboardHighlight(midiNotes);
@@ -78,14 +138,15 @@ window.addEventListener('DOMContentLoaded', () => {
         chordVisNotes = next;
     });
 
-    // Initial render
-    try {
-        applyLayout(savedLayout);
-    } catch(e) {
-        console.error('applyLayout failed:', e);
-        var errDiv2 = document.createElement('div');
-        errDiv2.style.cssText = 'position:fixed;top:90px;left:0;right:0;background:purple;color:#fff;padding:12px;z-index:9999;font:14px monospace;white-space:pre-wrap;';
-        errDiv2.textContent = 'applyLayout ERROR: ' + e.message + '\n' + e.stack;
-        document.body.appendChild(errDiv2);
-    }
+    // ── Lesson + Dashboard UI ────────────────────────────────────────────
+    DashboardUI.init();
+    LessonUI.init();
 });
+
+// ── Dev helper ────────────────────────────────────────────────────────────
+function showError(msg, bg) {
+    var d = document.createElement('div');
+    d.style.cssText = `position:fixed;top:0;left:0;right:0;background:${bg};color:${bg==='orange'?'#000':'#fff'};padding:12px;z-index:9999;font:13px monospace;white-space:pre-wrap;`;
+    d.textContent = msg;
+    document.body.appendChild(d);
+}

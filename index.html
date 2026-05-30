@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Piano</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/lesson.css">
 </head>
 <body>
     <div id="app" class="app-layout">
@@ -157,6 +158,17 @@
                             <button class="layout-btn" data-layout="88">88</button>
                         </div>
                     </div>
+                    <div class="control-row">
+                        <span class="control-label">Input</span>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <button id="midi-toggle-btn" class="midi-status-indicator" title="Kết nối MIDI">
+                                <span class="midi-dot"></span>MIDI
+                            </button>
+                            <button id="mic-toggle-btn" class="midi-status-indicator" title="Dùng microphone">
+                                🎤 Mic
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -201,6 +213,7 @@
             document.body.appendChild(div);
         };
     </script>
+    <!-- Core audio + UI -->
     <script src="js/audio.js"></script>
     <script src="js/keyboard.js"></script>
     <script src="js/visualizer.js"></script>
@@ -212,6 +225,22 @@
     <script src="js/chordUI.js"></script>
     <script src="js/songUI.js"></script>
     <script src="js/progressionPlayer.js"></script>
+
+    <!-- EdTech: input sources -->
+    <script src="js/midi.js"></script>
+    <script src="js/pitchDetector.js"></script>
+    <script src="js/inputRouter.js"></script>
+    <script src="js/noteHighlighter.js"></script>
+
+    <!-- EdTech: lesson system -->
+    <script src="data/lessons.js"></script>
+    <script src="js/scorer.js"></script>
+    <script src="js/lessonEngine.js"></script>
+    <script src="js/progressStore.js"></script>
+    <script src="js/lessonUI.js"></script>
+    <script src="js/dashboard.js"></script>
+
+    <!-- App bootstrap (must be last) -->
     <script src="js/app.js"></script>
 </body>
 </html>
