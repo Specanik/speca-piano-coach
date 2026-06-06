@@ -671,12 +671,31 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    justify-content: flex-start;
+    overflow: hidden;
+    gap: 0;
+    padding: 0;
+    background: radial-gradient(ellipse at 50% 80%, rgba(20, 30, 60, 0.6) 0%, transparent 70%);
+}
+
+/* Piano tab: controls on top, keyboard fills remaining space */
+#practice-piano-tab .practice-controls-row {
+    flex-shrink: 0;
+    padding: 8px 16px 6px;
+}
+
+#practice-piano-tab #keyboard {
+    flex: 1;
+    min-height: 160px;
+    display: flex;
+    align-items: flex-end;
     justify-content: center;
     overflow: hidden;
-    gap: 8px;
-    padding: 8px 0 4px;
-    background: radial-gradient(ellipse at 50% 80%, rgba(20, 30, 60, 0.6) 0%, transparent 70%);
+}
+
+#practice-piano-tab .footer {
+    flex-shrink: 0;
 }
 
 /* ── LEARN VIEW (Full-screen lesson) ──────────────────────────────── */
@@ -886,58 +905,36 @@
     to   { transform: translateX(0);     opacity: 1; }
 }
 
-/* ── Responsive: desktop sidebar for practice ─────────────────────── */
+/* ── Responsive: desktop layout ───────────────────────────────────── */
+/* ── Responsive: desktop tweaks (bottom nav stays, no side-nav) ────── */
 @media (min-width: 900px) {
-    .practice-view {
-        flex-direction: row;
-    }
-
-    .practice-sidebar {
-        width: 280px;
-        flex-shrink: 0;
-        border-right: 1px solid rgba(100, 160, 255, 0.1);
-        overflow-y: auto;
-    }
-
+    /* Bottom nav: keep visible, standard height */
     .bottom-nav {
-        display: none;
+        height: 60px;
     }
 
-    /* Desktop: side nav */
-    .side-nav {
-        display: flex !important;
+    /* Practice view stays column — controls on top, keyboard below */
+    .practice-view {
         flex-direction: column;
-        width: 72px;
-        flex-shrink: 0;
-        background: rgba(8, 8, 18, 0.95);
-        border-right: 1px solid rgba(100, 160, 255, 0.08);
-        padding: 8px 0;
-        gap: 4px;
-        align-items: center;
     }
 
-    .side-nav .nav-btn {
-        width: 56px;
-        height: 56px;
-        border-radius: 14px;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .side-nav .nav-btn.active::before {
-        left: 0;
-        top: 10%;
-        bottom: 10%;
-        right: auto;
-        width: 3px;
-        height: auto;
-        border-radius: 0 2px 2px 0;
-    }
-
-    #view-container {
+    /* Practice piano tab: give keyboard more room on wide screens */
+    #practice-piano-tab {
         flex: 1;
-        display: flex;
-        flex-direction: row;
+        min-height: 0;
+    }
+
+    #keyboard {
+        flex: 1;
+        min-height: 200px;
+    }
+
+    /* Cap home content width for readability on very wide screens */
+    .home-view #home-content {
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 0 24px;
     }
 }
 
