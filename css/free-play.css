@@ -59,10 +59,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 20px;
+    padding: 8px 20px;
     background: var(--sp-bg-2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    gap: 16px;
+    gap: 14px;
     flex-wrap: wrap;
 }
 
@@ -116,6 +116,82 @@
     font-weight: 700;
     color: #7ab8ff;
     animation: sp-pop 0.2s var(--sp-ease-spring);
+}
+
+/* ── Chord main row (name + formula side by side) ──────────────────── */
+.fp-chord-main {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+/* ── Chord suggestions bar ──────────────────────────────────────────── */
+.fp-suggestions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 16px 6px;
+    background: rgba(74, 158, 255, 0.04);
+    border-bottom: 1px solid rgba(74, 158, 255, 0.08);
+    overflow-x: auto;
+    scrollbar-width: none;
+    min-height: 36px;
+    animation: sp-slide-up 0.2s var(--sp-ease);
+}
+
+.fp-suggestions::-webkit-scrollbar { display: none; }
+
+.fp-suggestions.hidden { display: none; }
+
+.fp-suggestions-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.25);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.fp-suggestions-list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.fp-suggest-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px 3px 8px;
+    border-radius: var(--sp-r-full);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    cursor: default;
+    transition: background var(--sp-dur-fast), border-color var(--sp-dur-fast);
+    white-space: nowrap;
+    animation: sp-pop 0.18s var(--sp-ease-spring);
+}
+
+.fp-suggest-chip:hover {
+    background: rgba(74, 158, 255, 0.12);
+    border-color: rgba(74, 158, 255, 0.25);
+}
+
+.fp-suggest-chord {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.75);
+    letter-spacing: 0.01em;
+}
+
+.fp-suggest-add {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--sp-accent);
+    opacity: 0.8;
 }
 
 /* ── Settings / controls strip ─────────────────────────────────────── */

@@ -61,12 +61,20 @@ const FreePlayView = (() => {
                 </button>
             </div>
 
-            <!-- Chord display -->
+            <!-- Chord display + suggestions -->
             <div class="fp-chord-bar" id="fp-chord-bar">
-                <div class="fp-chord-name" id="fp-chord-name">—</div>
-                <div class="fp-chord-formula" id="fp-chord-formula"></div>
+                <div class="fp-chord-main">
+                    <div class="fp-chord-name" id="fp-chord-name">—</div>
+                    <div class="fp-chord-formula" id="fp-chord-formula"></div>
+                </div>
                 <div id="fp-notes-played" class="fp-notes-played"></div>
                 <div class="fp-chord-empty" id="fp-chord-empty">Nhấn phím để bắt đầu...</div>
+            </div>
+
+            <!-- Chord suggestions (shows when notes pressed but chord incomplete) -->
+            <div class="fp-suggestions hidden" id="fp-suggestions">
+                <span class="fp-suggestions-label">Gợi ý hợp âm:</span>
+                <div class="fp-suggestions-list" id="fp-suggestions-list"></div>
             </div>
 
             <!-- Recording playback bar -->
@@ -407,6 +415,7 @@ const FreePlayView = (() => {
             formulaEl.textContent = '';
             if (chipsEl) chipsEl.innerHTML = '';
             if (emptyEl) emptyEl.style.display = '';
+            _renderSuggestions([]);
             return;
         }
 
@@ -425,30 +434,122 @@ const FreePlayView = (() => {
             nameEl.textContent    = NOTE_NAMES[[...notes][0] % 12];
             formulaEl.textContent = '';
             nameEl.classList.remove('sp-correct');
+            _renderSuggestions(notes);
             return;
         }
 
         // Multi-note: detect chord
         const chord = _detectChord([...notes]);
         if (chord) {
-            // "Cm/G" or "C" — slash shown in smaller text
             const slash = chord.slash
                 ? `<span style="font-size:0.55em;opacity:0.7">${chord.slash}</span>`
                 : '';
             nameEl.innerHTML      = chord.root + chord.suffix + slash;
             formulaEl.textContent = chord.formula + (chord.slash ? `  (thế ${_inversionLabel(chord.slash)})` : '');
             nameEl.classList.add('sp-correct');
+            // Show suggestions only when fewer than 3 distinct PCs (chord might still be incomplete)
+            const uniquePcs = new Set([...notes].map(m => m % 12)).size;
+            _renderSuggestions(uniquePcs <= 2 ? notes : []);
         } else {
             const pcs = [...new Set([...notes].map(m => m % 12))];
             nameEl.textContent    = pcs.map(pc => NOTE_NAMES[pc]).join('+');
             formulaEl.textContent = 'hợp âm không xác định';
             nameEl.classList.remove('sp-correct');
+            _renderSuggestions(notes);
         }
     }
 
     function _inversionLabel(slash) {
-        // slash is "/X" — just return the bass note
         return slash.slice(1);
+    }
+
+    // ── Chord suggestion engine ───────────────────────────────────────
+    // Patterns used for suggestions (common chords only, no exotic)
+    const SUGGEST_PATTERNS = [
+        { intervals:[0,4,7],    suffix:'',     name:'trưởng'  },
+        { intervals:[0,3,7],    suffix:'m',    name:'thứ'     },
+        { intervals:[0,4,7,10], suffix:'7',    name:'7'       },
+        { intervals:[0,4,7,11], suffix:'maj7', name:'maj7'    },
+        { intervals:[0,3,7,10], suffix:'m7',   name:'m7'      },
+        { intervals:[0,2,7],    suffix:'sus2', name:'sus2'    },
+        { intervals:[0,5,7],    suffix:'sus4', name:'sus4'    },
+        { intervals:[0,3,6],    suffix:'dim',  name:'dim'     },
+        { intervals:[0,4,8],    suffix:'aug',  name:'aug'     },
+        { intervals:[0,3,6,9],  suffix:'dim7', name:'dim7'    },
+        { intervals:[0,4,7,9],  suffix:'6',    name:'6'       },
+        { intervals:[0,3,7,9],  suffix:'m6',   name:'m6'      },
+    ];
+
+    // Root priority: white keys first (more common), then black keys
+    const ROOT_PRIORITY = [0,2,4,5,7,9,11, 1,3,6,8,10];
+
+    function _suggestChords(midiNotes) {
+        if (midiNotes.length === 0) return [];
+
+        const pressedPcs = new Set(midiNotes.map(m => m % 12));
+        const results = [];
+
+        for (const rootPc of ROOT_PRIORITY) {
+            for (const pat of SUGGEST_PATTERNS) {
+                // Build the full set of pitch classes for this chord
+                const chordPcs = pat.intervals.map(i => (rootPc + i) % 12);
+                const chordSet = new Set(chordPcs);
+
+                // All pressed notes must belong to this chord
+                if (![...pressedPcs].every(pc => chordSet.has(pc))) continue;
+
+                // Don't suggest if already a complete match (handled by chord display)
+                const missing = chordPcs.filter(pc => !pressedPcs.has(pc));
+                if (missing.length === 0) continue;
+
+                // Coverage: how many of pressed notes are "used" by this chord (always 100% by filter above)
+                // Rank: fewest missing notes wins; prefer patterns with more pressed coverage
+                const score = (pressedPcs.size / chordPcs.length) * 20 - missing.length * 3
+                    + (ROOT_PRIORITY.indexOf(rootPc) < 7 ? 1 : 0); // white key bonus
+
+                results.push({
+                    display:  NOTE_NAMES[rootPc] + pat.suffix,
+                    missing:  missing.map(pc => NOTE_NAMES[pc]),
+                    score,
+                });
+            }
+        }
+
+        // Sort by score descending, deduplicate display names, take top 6
+        results.sort((a, b) => b.score - a.score);
+        const seen = new Set();
+        return results.filter(r => {
+            if (seen.has(r.display)) return false;
+            seen.add(r.display);
+            return true;
+        }).slice(0, 6);
+    }
+
+    function _renderSuggestions(notes) {
+        const bar  = document.getElementById('fp-suggestions');
+        const list = document.getElementById('fp-suggestions-list');
+        if (!bar || !list) return;
+
+        // Only show suggestions when 1-3 notes pressed
+        if (notes.length === 0 || notes.length > 3) {
+            bar.classList.add('hidden');
+            return;
+        }
+
+        const suggestions = _suggestChords([...notes]);
+        if (suggestions.length === 0) {
+            bar.classList.add('hidden');
+            return;
+        }
+
+        list.innerHTML = suggestions.map(s =>
+            `<div class="fp-suggest-chip">
+                <span class="fp-suggest-chord">${s.display}</span>
+                <span class="fp-suggest-add">+${s.missing.join(' +')}</span>
+            </div>`
+        ).join('');
+
+        bar.classList.remove('hidden');
     }
 
     // ── NoteOn / NoteOff hooks (called by AppShell's InputRouter) ─────
