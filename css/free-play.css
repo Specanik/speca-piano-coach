@@ -75,6 +75,7 @@
     transition: color var(--sp-dur-fast), transform var(--sp-dur-fast);
     min-width: 80px;
     text-align: center;
+    white-space: nowrap;
 }
 
 .fp-chord-name.sp-correct {
@@ -85,10 +86,12 @@
 .fp-chord-formula {
     font-size: var(--sp-text-xs);
     color: rgba(255, 255, 255, 0.4);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     min-width: 60px;
+    max-width: 220px;
+    text-align: center;
+    line-height: 1.4;
 }
 
 .fp-chord-empty {
