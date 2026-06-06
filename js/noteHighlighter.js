@@ -22,7 +22,19 @@ const NoteHighlighter = (() => {
 
     // ── DOM helpers ────────────────────────────────────────────────────────
     function keyEl(midi) {
+        // Prefer the active view's piano so lesson piano and practice piano
+        // don't interfere with each other (both live in DOM simultaneously).
+        const activeView = document.querySelector('.view-active');
+        if (activeView) {
+            const el = activeView.querySelector(`.piano [data-midi="${midi}"]`);
+            if (el) return el;
+        }
         return document.querySelector(`.piano [data-midi="${midi}"]`);
+    }
+
+    function allKeyEls(midi) {
+        // All matching keys across all views (for demo highlighting)
+        return [...document.querySelectorAll(`.piano [data-midi="${midi}"]`)];
     }
 
     function clearClasses(el) {
@@ -117,6 +129,7 @@ const NoteHighlighter = (() => {
         showTargetHints,
         hideTargetHints,
         isChordComplete,
-        getTarget: () => new Set(_targetSet),
+        getTarget:  () => new Set(_targetSet),
+        allKeyEls,
     };
 })();

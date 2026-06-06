@@ -20,8 +20,11 @@
     align-items: center;
     padding: 0 14px;
     gap: 10px;
-    background: rgba(10, 10, 20, 0.9);
-    border-bottom: 1px solid rgba(100, 160, 255, 0.1);
+    background: rgba(8, 8, 18, 0.92);
+    border-bottom: 1px solid rgba(100, 160, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
 }
 
 .lv-back-btn {
@@ -130,31 +133,38 @@
 
 /* ── THEORY STEP ──────────────────────────────────────────────────── */
 .lv-theory {
-    padding: 16px 18px 20px;
+    padding: 20px 18px 24px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     animation: slideUp 0.25s ease;
 }
 
 .lv-theory-heading {
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: #e8f0ff;
-    line-height: 1.3;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
 }
 
 .lv-theory-body {
-    font-size: 0.83rem;
-    line-height: 1.7;
-    color: #9ab8d0;
+    font-size: 0.88rem;
+    line-height: 1.75;
+    color: #a0b8d0;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .lv-theory-body h3 {
-    font-size: 0.88rem;
-    color: #d0e4ff;
-    font-weight: 700;
-    margin: 14px 0 6px;
+    font-size: 0.9rem;
+    color: #e0f0ff;
+    font-weight: 800;
+    margin: 18px 0 8px;
+    padding-left: 10px;
+    border-left: 3px solid #4a9eff;
 }
 
 .lv-theory-body h3:first-child { margin-top: 0; }
@@ -281,13 +291,21 @@
 .lv-feedback.correct {
     background: rgba(80, 200, 120, 0.15);
     color: #50c878;
-    border: 1px solid rgba(80, 200, 120, 0.25);
+    border: 1px solid rgba(80, 200, 120, 0.3);
+    animation: feedbackPop 0.3s ease;
 }
 
 .lv-feedback.wrong {
     background: rgba(255, 80, 80, 0.12);
     color: #ff6060;
     border: 1px solid rgba(255, 80, 80, 0.2);
+    animation: wrongShake 0.35s ease;
+}
+
+@keyframes feedbackPop {
+    0%   { transform: scale(0.97); opacity: 0.7; }
+    50%  { transform: scale(1.02); }
+    100% { transform: scale(1);    opacity: 1; }
 }
 
 .lv-feedback.waiting {
@@ -393,7 +411,140 @@
 .lv-bpm-display {
     font-size: 0.7rem;
     color: #4a6888;
+}
+
+/* Voice selector trong lesson play step */
+.lv-voice-select {
     margin-left: auto;
+    background: rgba(10, 10, 24, 0.9);
+    border: 1px solid rgba(100, 160, 255, 0.18);
+    border-radius: 7px;
+    color: #6a9abb;
+    font-size: 0.65rem;
+    font-family: inherit;
+    padding: 4px 8px;
+    cursor: pointer;
+    max-width: 110px;
+}
+
+.lv-voice-select:focus { outline: none; border-color: rgba(74,158,255,0.4); }
+
+/* ── Simply Piano-style play controls ─────────────────────────────── */
+.lv-play-topbar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.lv-play-topbar::-webkit-scrollbar { display: none; }
+
+/* Segmented control group */
+.lv-ctrl-seg {
+    display: flex;
+    border-radius: 7px;
+    overflow: hidden;
+    border: 1px solid rgba(100,160,255,0.18);
+    flex-shrink: 0;
+}
+.lv-ctrl-seg-btn {
+    padding: 4px 8px;
+    font-size: 0.65rem;
+    font-family: inherit;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.35);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    white-space: nowrap;
+}
+.lv-ctrl-seg-btn.active {
+    background: rgba(74,158,255,0.22);
+    color: #7ab8ff;
+    font-weight: 700;
+}
+.lv-ctrl-seg-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.6);
+}
+
+/* Separator */
+.lv-ctrl-sep {
+    width: 1px;
+    height: 20px;
+    background: rgba(255,255,255,0.08);
+    flex-shrink: 0;
+}
+
+/* Wait mode toggle */
+.lv-ctrl-tog {
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 7px;
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    flex-shrink: 0;
+}
+.lv-ctrl-tog.active {
+    background: rgba(74,158,255,0.18);
+    border-color: rgba(74,158,255,0.35);
+    color: #4a9eff;
+}
+.lv-ctrl-tog:hover { background: rgba(255,255,255,0.07); }
+
+/* BPM label */
+.lv-bpm-label {
+    font-size: 0.62rem;
+    color: #3a5870;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Piano play area (replaces inline style) */
+.lv-piano-play-area {
+    height: 190px;
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6,8,18,0.95);
+}
+
+/* Countdown overlay */
+.lv-countdown-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(6,10,24,0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    backdrop-filter: blur(2px);
+}
+.lv-countdown-num {
+    font-size: 5.5rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 60px rgba(74,158,255,0.9), 0 0 20px rgba(74,158,255,0.5);
+    line-height: 1;
+}
+@keyframes lv-countdown-pop {
+    0%   { transform: scale(1.7); opacity: 0; }
+    20%  { opacity: 1; }
+    100% { transform: scale(1);   opacity: 0.75; }
+}
+.lv-countdown-pop {
+    animation: lv-countdown-pop 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* ── QUIZ STEP ────────────────────────────────────────────────────── */
@@ -601,19 +752,29 @@
     border: 1px solid rgba(100, 160, 255, 0.1);
     border-radius: 14px;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    transition: background 0.18s, border-color 0.18s, transform 0.15s, box-shadow 0.18s;
     width: 100%;
     text-align: left;
     font-family: inherit;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
 .lv-lesson-card:hover {
-    background: rgba(100, 160, 255, 0.12);
-    border-color: rgba(100, 160, 255, 0.25);
-    transform: translateY(-1px);
+    background: rgba(100, 160, 255, 0.11);
+    border-color: rgba(100, 160, 255, 0.28);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(100, 160, 255, 0.1);
 }
 
-.lv-lesson-card.completed { border-color: rgba(80, 200, 120, 0.25); }
+.lv-lesson-card.completed {
+    border-color: rgba(80, 200, 120, 0.22);
+    background: rgba(80, 200, 120, 0.04);
+}
+
+.lv-lesson-card.completed:hover {
+    border-color: rgba(80, 200, 120, 0.4);
+    background: rgba(80, 200, 120, 0.08);
+}
 
 .lv-lesson-thumb {
     font-size: 1.8rem;
@@ -699,8 +860,15 @@
 .lv-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 
 .lv-btn-primary {
-    background: linear-gradient(135deg, #4a9eff, #7b5ea7);
+    background: linear-gradient(135deg, #4a9eff 0%, #7b5ea7 50%, #4a9eff 100%);
+    background-size: 200% auto;
     color: #fff;
+    animation: gradientShift 4s ease infinite;
+}
+
+.lv-btn-primary:not(:disabled):hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
 }
 
 .lv-btn-secondary {
@@ -739,19 +907,22 @@
     border-radius: 50%;
     background: rgba(100, 160, 255, 0.12);
     border: 1px solid rgba(100, 160, 255, 0.2);
-    transition: background 0.05s, transform 0.05s;
 }
 
-.metro-beat.down {
-    background: #4a9eff;
-    transform: scale(1.3);
-    box-shadow: 0 0 8px rgba(74, 158, 255, 0.6);
+/* CSS animation drives the flash — JS only toggles .down, no setTimeout needed */
+@keyframes metro-flash {
+    0%   { background: #4a9eff; transform: scale(1.35); box-shadow: 0 0 10px rgba(74,158,255,0.7); }
+    60%  { background: #4a9eff; transform: scale(1.2); }
+    100% { background: rgba(100,160,255,0.12); transform: scale(1); box-shadow: none; }
+}
+@keyframes metro-flash-accent {
+    0%   { background: #ffa032; transform: scale(1.35); box-shadow: 0 0 10px rgba(255,160,50,0.7); }
+    60%  { background: #ffa032; transform: scale(1.2); }
+    100% { background: rgba(100,160,255,0.12); transform: scale(1); box-shadow: none; }
 }
 
-.metro-beat:nth-child(1).down {
-    background: #ffa032;
-    box-shadow: 0 0 8px rgba(255, 160, 50, 0.6);
-}
+.metro-beat.down                    { animation: metro-flash        0.18s ease-out forwards; }
+.metro-beat:nth-child(1).down       { animation: metro-flash-accent  0.18s ease-out forwards; }
 
 .metro-bpm-ctrl {
     display: flex;
@@ -819,4 +990,159 @@
     .lv-theory-heading { font-size: 0.95rem; }
     .lv-result-score   { font-size: 2.5rem; }
     .lv-result-stars   { font-size: 2rem; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   DEMO PLAYER — phát thử bài nhạc
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Piano key glow khi demo đang phát */
+.key-white.demo-playing {
+    background: linear-gradient(to bottom, #ffe066, #ffd700) !important;
+    border-color: #cc9900 !important;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.7) !important;
+    transform: translateY(2px);
+    transition: background 0.05s, box-shadow 0.05s;
+    z-index: 3;
+}
+
+.key-black.demo-playing {
+    background: linear-gradient(160deg, #ff8c00, #cc5500) !important;
+    box-shadow: 0 0 10px rgba(255, 140, 0, 0.8) !important;
+    transition: background 0.05s, box-shadow 0.05s;
+    z-index: 4;
+}
+
+/* Demo button (play step + practice step) */
+.lv-demo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    background: rgba(255, 165, 50, 0.1);
+    border: 1px solid rgba(255, 165, 50, 0.28);
+    border-radius: 8px;
+    color: #ffa032;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.lv-demo-btn:hover {
+    background: rgba(255, 165, 50, 0.2);
+    color: #ffb860;
+}
+
+.lv-demo-btn.demo-btn-playing {
+    background: rgba(255, 80, 80, 0.12);
+    border-color: rgba(255, 80, 80, 0.3);
+    color: #ff7070;
+}
+
+/* Lesson list: wrapper row để đặt preview button bên ngoài card */
+.lv-lesson-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.lv-lesson-row .lv-lesson-card {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Preview play button bên phải mỗi bài trong list */
+.lv-preview-btn {
+    flex-shrink: 0;
+    width: 42px;
+    background: rgba(74, 158, 255, 0.08);
+    border: 1px solid rgba(74, 158, 255, 0.18);
+    border-radius: 12px;
+    color: #4a9eff;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.lv-preview-btn:hover {
+    background: rgba(74, 158, 255, 0.18);
+    color: #7ab8ff;
+    transform: scale(1.05);
+}
+
+.lv-preview-btn[data-playing] {
+    background: rgba(255, 80, 80, 0.12);
+    border-color: rgba(255, 80, 80, 0.28);
+    color: #ff7070;
+    font-size: 0.72rem;
+}
+
+/* Practice step toolbar (demo button row) */
+.lv-practice-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 18px 6px;
+    flex-shrink: 0;
+}
+
+/* Header spacer */
+.lv-header-spacer { flex: 1; }
+
+/* ── MIDI status indicator trong header bài học ─────────────────────── */
+.lv-midi-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    background: rgba(100, 160, 255, 0.06);
+    border: 1px solid rgba(100, 160, 255, 0.15);
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #4a6888;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.lv-midi-status:hover {
+    background: rgba(100, 160, 255, 0.13);
+    color: #7ab8ff;
+}
+
+.lv-midi-status.connected {
+    background: rgba(80, 200, 120, 0.1);
+    border-color: rgba(80, 200, 120, 0.3);
+    color: #50c878;
+}
+
+.lv-midi-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.5;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+}
+
+.lv-midi-status.connected .lv-midi-dot {
+    opacity: 1;
+    animation: midiPulse 2s ease-in-out infinite;
+}
+
+@keyframes midiPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(80, 200, 120, 0); }
+    50%       { box-shadow: 0 0 0 3px rgba(80, 200, 120, 0.25); }
 }

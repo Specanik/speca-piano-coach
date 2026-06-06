@@ -513,6 +513,22 @@
     color: #fff;
 }
 
+/* ── Demo player key glow ─────────────────────────────────────────── */
+.piano [data-midi].demo-playing {
+    background: linear-gradient(180deg, #ffe066 0%, #ffd700 100%) !important;
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.8) !important;
+    transform: translateY(2px);
+    transition: background 0.04s, box-shadow 0.04s !important;
+    z-index: 3;
+}
+
+.piano [data-midi].key-black.demo-playing {
+    background: linear-gradient(160deg, #ff9900 0%, #cc5500 100%) !important;
+    box-shadow: 0 0 12px rgba(255, 153, 0, 0.9) !important;
+    transform: translateY(2px);
+    z-index: 4;
+}
+
 /* ── Highlight overrides on piano keys ────────────────────────────── */
 .piano [data-midi].highlight-target {
     background: linear-gradient(180deg, #4a9eff 0%, #2070cc 100%) !important;

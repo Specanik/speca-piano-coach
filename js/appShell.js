@@ -10,6 +10,7 @@
 const AppShell = (() => {
 
     let _currentPianoLayout = '36';
+    let _resizeTimer        = null;
 
     // ── Top bar stats ─────────────────────────────────────────────
     function updateStats() {
@@ -35,39 +36,25 @@ const AppShell = (() => {
             theory: document.getElementById('practice-theory-tab'),
         };
 
-        // Initial state: show piano tab, hide others
-        Object.entries(tabMap).forEach(([k, el]) => {
-            if (!el) return;
-            if (k === 'piano') {
-                el.classList.remove('hidden');
-                el.style.display = '';
-            } else {
-                el.classList.add('hidden');
-                el.style.display = 'none';
-            }
-        });
+        function _showTab(target) {
+            Object.entries(tabMap).forEach(([k, el]) => {
+                if (!el) return;
+                // Single source of truth: data-tab-active attribute drives CSS display.
+                // CSS rule: [data-tab-active="false"] { display: none !important; }
+                el.dataset.tabActive = String(k === target);
+            });
+        }
+
+        // Initial state
+        _showTab('piano');
 
         document.querySelectorAll('.practice-tab').forEach(btn => {
             btn.addEventListener('click', () => {
                 const target = btn.dataset.ptab;
-                // Update tab buttons
                 document.querySelectorAll('.practice-tab').forEach(b =>
                     b.classList.toggle('active', b.dataset.ptab === target)
                 );
-                // Show/hide tab panels — use BOTH class and inline style to avoid conflicts
-                Object.entries(tabMap).forEach(([k, el]) => {
-                    if (!el) return;
-                    if (k === target) {
-                        el.classList.remove('hidden');
-                        el.style.display = 'flex';
-                        el.style.flexDirection = 'column';
-                        el.style.flex = '1';
-                        el.style.minHeight = '0';
-                    } else {
-                        el.classList.add('hidden');
-                        el.style.display = 'none';
-                    }
-                });
+                _showTab(target);
 
                 // Lazy init on first visit
                 if (target === 'chords') {
@@ -78,6 +65,10 @@ const AppShell = (() => {
                     if (mc && mc.childElementCount === 0 && typeof MidiTester !== 'undefined') {
                         MidiTester.render('midi-tester-container');
                     }
+                    // Auto-attempt MIDI connection when tester tab is opened
+                    if (!InputRouter.getState().midi) {
+                        InputRouter.enableMidi().catch(() => {});
+                    }
                 }
             });
         });
@@ -87,7 +78,16 @@ const AppShell = (() => {
     function _initInputToggles() {
         let midiOn = false, micOn = false;
 
-        document.querySelectorAll('[id="midi-toggle-btn"]').forEach(btn => {
+        // Sustain indicator pill (shows "🦶 Pedal" when CC64 held)
+        InputRouter.onStateChange(st => {
+            const pill = document.getElementById('stat-sustain');
+            if (pill) {
+                pill.classList.toggle('hidden', !st.sustainOn);
+            }
+        });
+
+        // Use class selector — IDs must be unique; multiple buttons use a class.
+        document.querySelectorAll('.midi-toggle-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!MidiInput.isSupported()) {
                     alert('Web MIDI API không hỗ trợ. Dùng Chrome/Edge.');
@@ -101,13 +101,13 @@ const AppShell = (() => {
                 } else {
                     InputRouter.disableMidi();
                 }
-                document.querySelectorAll('[id="midi-toggle-btn"]').forEach(b =>
+                document.querySelectorAll('.midi-toggle-btn').forEach(b =>
                     b.classList.toggle('active', midiOn)
                 );
             });
         });
 
-        document.querySelectorAll('[id="mic-toggle-btn"]').forEach(btn => {
+        document.querySelectorAll('.mic-toggle-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 micOn = !micOn;
                 if (micOn) {
@@ -117,7 +117,7 @@ const AppShell = (() => {
                 } else {
                     InputRouter.disableMic();
                 }
-                document.querySelectorAll('[id="mic-toggle-btn"]').forEach(b =>
+                document.querySelectorAll('.mic-toggle-btn').forEach(b =>
                     b.classList.toggle('active', micOn)
                 );
             });
@@ -168,11 +168,20 @@ const AppShell = (() => {
             }
         });
 
+        // CSS handles the flash duration via animation; we just toggle the class.
+        // Adding 'down' starts the animation; removing it on animationend is clean.
         Metronome.onBeat((beatIdx) => {
             const beat = document.getElementById(`mb${beatIdx}`);
             if (!beat) return;
+            beat.classList.remove('down');
+            // Force reflow so re-adding class restarts the animation
+            void beat.offsetWidth;
             beat.classList.add('down');
-            setTimeout(() => beat.classList.remove('down'), 120);
+        });
+        document.addEventListener('animationend', e => {
+            if (e.target.classList?.contains('metro-beat')) {
+                e.target.classList.remove('down');
+            }
         });
     }
 
@@ -184,7 +193,7 @@ const AppShell = (() => {
                 const view = btn.dataset.view;
                 if (view === 'learn') {
                     Router.go('learn');
-                    setTimeout(() => LearnView.showList(), 50);
+                    requestAnimationFrame(() => LearnView.showList());
                 } else {
                     Router.go(view);
                 }
@@ -202,16 +211,65 @@ const AppShell = (() => {
                 FallingNotes.stop();
                 NoteHighlighter.clearTarget();
             }
-
-            // Render on-demand
-            if (view === 'home')    setTimeout(() => HomeView.render(), 20);
-            if (view === 'profile') setTimeout(() => ProfileView.render(), 20);
-
-            // Re-render piano when navigating to practice (canvas sizing fix)
-            if (view === 'practice') {
-                setTimeout(() => _renderPiano(_currentPianoLayout), 60);
+            // Cleanup when leaving freeplay
+            if (prev === 'freeplay') {
+                FreePlayView?.hide?.();
             }
+
+            // Render on next animation frame — view is visible by then so
+            // canvas dimensions are correct (eliminates 0-width race condition).
+            if (view === 'home')     requestAnimationFrame(() => HomeView.render());
+            if (view === 'profile')  requestAnimationFrame(() => ProfileView.render());
+            if (view === 'practice') requestAnimationFrame(() => _renderPiano(_currentPianoLayout));
+            if (view === 'freeplay') requestAnimationFrame(() => FreePlayView?.show?.());
         });
+    }
+
+    // ── Voice selector ─────────────────────────────────────────────
+    function _initVoiceSelector() {
+        const container = document.getElementById('voice-switcher');
+        if (!container) return;
+
+        function _dot(status) {
+            if (status === 'loading') return '<span class="vbtn-dot loading"></span>';
+            if (status === 'partial') return '<span class="vbtn-dot partial"></span>';
+            if (status === 'ready')   return '<span class="vbtn-dot ready"></span>';
+            return '';
+        }
+
+        function _render() {
+            const voices   = AudioEngine.getVoices();
+            const activeId = AudioEngine.getVoice();
+
+            // Group by category
+            const groups = {};
+            voices.forEach(v => {
+                if (!groups[v.cat]) groups[v.cat] = [];
+                groups[v.cat].push(v);
+            });
+
+            container.innerHTML = Object.entries(groups).map(([cat, vs]) => `
+                <div class="voice-group">
+                    <span class="voice-group-label">${cat}</span>
+                    <div class="voice-group-btns">
+                        ${vs.map(v => `
+                        <button class="voice-btn ${v.id === activeId ? 'active' : ''}"
+                            data-voice="${v.id}" title="${v.description}">
+                            ${v.label}${_dot(v.status)}
+                        </button>`).join('')}
+                    </div>
+                </div>`).join('');
+
+            container.querySelectorAll('.voice-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    AudioEngine.setVoice(btn.dataset.voice);
+                    _render();
+                });
+            });
+        }
+
+        _render();
+        AudioEngine.onVoiceChange(() => _render());
     }
 
     // ── Piano (practice view) ──────────────────────────────────────
@@ -260,32 +318,39 @@ const AppShell = (() => {
     function _initInputRouter() {
         InputRouter.attachKeyboard();
 
-        InputRouter.onNoteOn(midi => {
-            AudioEngine.startNote(midi, midi);
-            Visualizer.noteOn(midi);
-            NoteHighlighter.noteOn(midi);
-            FallingNotes.noteOn(midi);
-            LessonEngine.noteOn(midi);
-            MidiTester?.noteOn?.(midi, 80, 0);
+        InputRouter.onNoteOn((midi, velocity = 80) => {
+            // Apply master volume as velocity scale; read transpose offset
+            const S         = window.SettingsPanel;
+            const volScale  = S ? S.get('masterVolume') / 100 : 0.85;
+            const transpose = S ? (S.get('midiTranspose') || 0) : 0;
+            const v = Math.max(1, Math.min(127, Math.round(velocity * volScale)));
+            const m = transpose ? Math.max(0, Math.min(127, midi + transpose)) : midi;
 
-            // Combo system: fire if note is in current target
-            if (typeof ComboSystem !== 'undefined' && typeof NoteHighlighter !== 'undefined') {
+            AudioEngine.startNote(m, m, v);
+            Visualizer.noteOn(m);
+            NoteHighlighter.noteOn(m);
+            FallingNotes.noteOn(m);
+            LessonEngine.noteOn(m);
+            FreePlayView?.noteOn?.(m);
+            MidiTester?.noteOn?.(m, v, 0);
+
+            if (typeof ComboSystem !== 'undefined') {
                 const target = NoteHighlighter.getTarget();
-                if (target.size > 0 && target.has(midi)) {
-                    ComboSystem.noteCorrect();
-                } else if (target.size > 0) {
-                    ComboSystem.noteWrong();
-                }
+                if (target.size > 0 && target.has(m)) ComboSystem.noteCorrect();
+                else if (target.size > 0)              ComboSystem.noteWrong();
             }
         });
 
         InputRouter.onNoteOff(midi => {
-            AudioEngine.stopNote(midi);
-            Visualizer.noteOff(midi);
-            NoteHighlighter.noteOff(midi);
-            FallingNotes.noteOff(midi);
-            LessonEngine.noteOff(midi);
-            MidiTester?.noteOff?.(midi);
+            const transpose = window.SettingsPanel?.get('midiTranspose') ?? 0;
+            const m = transpose ? Math.max(0, Math.min(127, midi + transpose)) : midi;
+            AudioEngine.stopNote(m);   // sustain logic handled inside AudioEngine
+            Visualizer.noteOff(m);
+            NoteHighlighter.noteOff(m);
+            FallingNotes.noteOff(m);
+            LessonEngine.noteOff(m);
+            FreePlayView?.noteOff?.(m);
+            MidiTester?.noteOff?.(m);
         });
 
         // ChordPlayer highlight sync
@@ -301,9 +366,10 @@ const AppShell = (() => {
 
     // ── Register Router views ──────────────────────────────────────
     function _registerViews() {
-        Router.registerView('home',    () => HomeView.render());
-        Router.registerView('learn',   () => LearnView.showList());
-        Router.registerView('profile', () => ProfileView.render());
+        Router.registerView('home',     () => HomeView.render());
+        Router.registerView('learn',    () => LearnView.showList());
+        Router.registerView('profile',  () => ProfileView.render());
+        Router.registerView('freeplay', () => FreePlayView?.show?.());
         Router.registerView('practice', () => {
             // Lazy init of chord system and songs
             try { SongUI.init(); } catch(e) { }
@@ -318,14 +384,20 @@ const AppShell = (() => {
 
     // ── Boot ───────────────────────────────────────────────────────
     function boot() {
+        // Pre-warm AudioContext on first pointer interaction to eliminate
+        // init latency on first MIDI note (browsers require user gesture).
+        document.addEventListener('pointerdown', () => AudioEngine.prewarm(), { once: true });
+
         updateStats();
         _initNav();         // ← sets Router.onNavigate (MUST be before anything that calls Router.go)
         _initPracticeTabs();
         _initInputToggles();
         _initMetronome();
+        _initVoiceSelector();
         _initPiano();
         _initInputRouter();
         _registerViews();
+        _initResizeHandler();
         LearnView.init();
 
         // Start adaptive session tracking
@@ -338,6 +410,20 @@ const AppShell = (() => {
         } else {
             Router.restore();
         }
+    }
+
+    // ── Window resize → re-render practice piano ───────────────────
+    function _initResizeHandler() {
+        const debounceMs = window.PianoConfig?.ui?.resizeDebounceMs ?? 150;
+        window.addEventListener('resize', () => {
+            clearTimeout(_resizeTimer);
+            _resizeTimer = setTimeout(() => {
+                const practiceEl = document.querySelector('[data-view="practice"]');
+                if (practiceEl?.classList.contains('view-active')) {
+                    _renderPiano(_currentPianoLayout);
+                }
+            }, debounceMs);
+        });
     }
 
     return { boot, updateStats };

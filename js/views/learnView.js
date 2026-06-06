@@ -6,11 +6,18 @@
  * DOM nodes — no piano remount, no FallingNotes restart on every note press.
  */
 const LearnView = (() => {
-    let _quizAnswered   = false;
-    let _resultData     = null;
-    let _pianoNoteMap   = {};
-    let _renderedPhase  = null;
-    let _renderedStep   = -1;   // stepIndex of last full render
+    let _quizAnswered    = false;
+    let _resultData      = null;
+    let _pianoNoteMap    = {};
+    let _pianoTotalWidth = 0;   // keyboard's native pixel width (for falling notes alignment)
+    let _renderedPhase   = null;
+    let _renderedStep    = -1;  // stepIndex of last full render
+    let _stepKbHandler   = null; // Space/Enter shortcut — cleaned up on each new step
+
+    // Play-step preferences (persist across lessons)
+    let _waitMode         = true;
+    let _currentSpeedMult = 1.0;
+    let _currentHand      = 'both';
 
     // ── Init ───────────────────────────────────────────────────────
     function init() {
@@ -20,6 +27,11 @@ const LearnView = (() => {
     // ── Navigate to learn view → show lesson list ──────────────────
     function showList() {
         _renderedPhase = null; _renderedStep = -1;
+        // Clean up step keyboard shortcut when leaving lesson
+        if (_stepKbHandler) {
+            document.removeEventListener('keydown', _stepKbHandler);
+            _stepKbHandler = null;
+        }
         const el = document.getElementById('learn-view');
         if (el) _renderLessonList(el);
     }
@@ -63,32 +75,97 @@ const LearnView = (() => {
             <div class="lv-header">
                 <span style="font-size:1.3rem">🎹</span>
                 <span class="lv-title">Tất cả bài học</span>
+                <div class="lv-header-spacer"></div>
+                ${_midiStatusHTML()}
             </div>
             <div class="lv-lesson-list">
                 ${lessons.map((l, i) => {
-                    const r = progress.completedLessons[l.id];
+                    const r     = progress.completedLessons[l.id];
                     const stars = r?.stars || 0;
+                    const hasPreview = !!DemoPlayer.getLessonPreview(l, 4);
                     return `
-                        <button class="lv-lesson-card ${r ? 'completed' : ''}" data-id="${l.id}">
-                            <div class="lv-lesson-thumb">${l.thumbnail}</div>
-                            <div class="lv-lesson-info">
-                                <div class="lv-lesson-num">Bài ${i + 1}</div>
-                                <div class="lv-lesson-title">${l.title}</div>
-                                <div class="lv-lesson-desc">${l.description}</div>
-                            </div>
-                            <div class="lv-lesson-meta">
-                                <div class="lv-lesson-xp">+${l.xp} XP</div>
-                                <div class="lv-lesson-stars">
-                                    <span class="s-earned">${'★'.repeat(stars)}</span>
-                                    <span class="s-empty">${'☆'.repeat(3 - stars)}</span>
+                        <div class="lv-lesson-row">
+                            <button class="lv-lesson-card ${r ? 'completed' : ''}" data-id="${l.id}">
+                                <div class="lv-lesson-thumb">${l.thumbnail}</div>
+                                <div class="lv-lesson-info">
+                                    <div class="lv-lesson-num">Bài ${i + 1}</div>
+                                    <div class="lv-lesson-title">${l.title}</div>
+                                    <div class="lv-lesson-desc">${l.description}</div>
                                 </div>
-                            </div>
-                        </button>`;
+                                <div class="lv-lesson-meta">
+                                    <div class="lv-lesson-xp">+${l.xp} XP</div>
+                                    <div class="lv-lesson-stars">
+                                        <span class="s-earned">${'★'.repeat(stars)}</span>
+                                        <span class="s-empty">${'☆'.repeat(3 - stars)}</span>
+                                    </div>
+                                </div>
+                            </button>
+                            ${hasPreview ? `
+                            <button class="lv-preview-btn" data-id="${l.id}" title="Nghe thử bài này">
+                                ▶
+                            </button>` : ''}
+                        </div>`;
                 }).join('')}
             </div>`;
 
+        // Start lesson on card click
         el.querySelectorAll('.lv-lesson-card').forEach(card => {
             card.addEventListener('click', () => startLesson(card.dataset.id));
+        });
+
+        // Preview button: play first few notes
+        el.querySelectorAll('.lv-preview-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                const lesson = LessonsData.getById(btn.dataset.id);
+                if (!lesson) return;
+                const preview = DemoPlayer.getLessonPreview(lesson, 10);
+                if (!preview) return;
+                const playStep = lesson.steps?.find(s => s.type === 'play');
+                const bpm = playStep?.bpm || 70;
+                DemoPlayer.playSequence(preview, bpm, { btnEl: btn, bpmScale: 1.2 });
+            });
+        });
+
+        // MIDI connect button in list header
+        _bindMidiBtn(el);
+    }
+
+    // ── MIDI status helpers ────────────────────────────────────────
+    function _midiStatusHTML() {
+        const st = (typeof InputRouter !== 'undefined') ? InputRouter.getState() : {};
+        const on = st.midi && st.midiDevices?.length;
+        const label = on ? (st.midiDevices[0].name.split(' ')[0]) : 'MIDI';
+        return `<button class="lv-midi-status ${on ? 'connected' : ''}" id="lv-midi-btn"
+                    title="${on ? 'MIDI đã kết nối — nhấn để ngắt' : 'Nhấn để kết nối MIDI'}">
+                    <span class="lv-midi-dot"></span>
+                    <span class="lv-midi-label">${label}</span>
+                </button>`;
+    }
+
+    function _bindMidiBtn(container) {
+        container.querySelector('#lv-midi-btn')?.addEventListener('click', async () => {
+            if (typeof InputRouter === 'undefined') return;
+            const st = InputRouter.getState();
+            if (st.midi) {
+                InputRouter.disableMidi();
+            } else {
+                if (!navigator.requestMIDIAccess) {
+                    alert('Trình duyệt không hỗ trợ Web MIDI. Dùng Chrome hoặc Edge.');
+                    return;
+                }
+                await InputRouter.enableMidi();
+            }
+            // Re-render header section to update indicator
+            const btn = container.querySelector('#lv-midi-btn');
+            if (btn) {
+                const st2 = InputRouter.getState();
+                const on  = st2.midi && st2.midiDevices?.length;
+                btn.className = `lv-midi-status ${on ? 'connected' : ''}`;
+                btn.querySelector('.lv-midi-label').textContent = on
+                    ? st2.midiDevices[0].name.split(' ')[0] : 'MIDI';
+                btn.title = on ? 'MIDI đã kết nối — nhấn để ngắt' : 'Nhấn để kết nối MIDI';
+            }
         });
     }
 
@@ -108,6 +185,8 @@ const LearnView = (() => {
             <div class="lv-header">
                 <button class="lv-back-btn" id="lv-back">←</button>
                 <span class="lv-title">${state.lessonTitle || ''}</span>
+                <div class="lv-header-spacer"></div>
+                ${_midiStatusHTML()}
                 <button class="lv-close-btn" id="lv-close">✕</button>
             </div>
             <div class="lv-step-bar">${stepDots}</div>
@@ -127,14 +206,22 @@ const LearnView = (() => {
         if (content) _renderStepContent(content, state);
 
         document.getElementById('lv-back')
-            ?.addEventListener('click', () => { FallingNotes.stop(); showList(); });
+            ?.addEventListener('click', () => { FallingNotes.stop(); DemoPlayer.stop(); showList(); });
         document.getElementById('lv-close')
-            ?.addEventListener('click', () => { FallingNotes.stop(); Router.go('home'); setTimeout(() => HomeView.render(), 100); });
+            ?.addEventListener('click', () => { FallingNotes.stop(); DemoPlayer.stop(); Router.go('home'); requestAnimationFrame(() => HomeView.render()); });
+        _bindMidiBtn(el);
         document.getElementById('lv-prev')
-            ?.addEventListener('click', () => { FallingNotes.stop(); _renderedStep = -1; LessonEngine.prevStep(); });
+            ?.addEventListener('click', () => { FallingNotes.stop(); DemoPlayer.stop(); _renderedStep = -1; LessonEngine.prevStep(); });
+
+        const _nextFn = () => {
+            const btn = document.getElementById('lv-next');
+            if (btn && !btn.disabled) btn.click();
+        };
+
         document.getElementById('lv-next')
             ?.addEventListener('click', () => {
                 FallingNotes.stop();
+                DemoPlayer.stop();
                 if (isLast) {
                     const summary = LessonEngine.endLesson();
                     _handleEnd(state.lessonId, summary);
@@ -144,6 +231,18 @@ const LearnView = (() => {
                     LessonEngine.nextStep();
                 }
             });
+
+        // Space/Enter advance shortcut — remove previous, register fresh each step
+        if (_stepKbHandler) document.removeEventListener('keydown', _stepKbHandler);
+        _stepKbHandler = e => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                const tag = e.target?.tagName;
+                if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA') return;
+                e.preventDefault();
+                _nextFn();
+            }
+        };
+        document.addEventListener('keydown', _stepKbHandler);
     }
 
     // ── Partial patch (same step, data changed) ────────────────────
@@ -231,76 +330,150 @@ const LearnView = (() => {
             ? (last.score >= 65 ? `✅ ${Scorer.gradeLabel(last.score)} — ${last.score}/100` : '❌ Thử lại')
             : '🎹 Nhấn các phím được tô sáng';
 
+        const targets = Array.isArray(step.notes?.[0]) ? step.notes[0] : (step.notes || []);
+
         container.innerHTML = `
             <div class="lv-practice">
                 <div class="lv-practice-instruction">${step.content || ''}</div>
                 ${step.hint ? `<div class="lv-practice-hint">💡 ${step.hint}</div>` : ''}
+                <div class="lv-practice-toolbar">
+                    ${targets.length ? `
+                    <button class="lv-demo-btn" id="lv-prac-demo">
+                        🔊 Nghe nốt mẫu
+                    </button>` : ''}
+                </div>
                 <div class="lv-feedback ${fbClass}" id="lv-prac-feedback">${fbMsg}</div>
                 <div class="lv-piano-area" id="lv-piano-practice" style="flex:1;min-height:0"></div>
             </div>`;
 
         _mountPiano('lv-piano-practice', '36');
-
-        const targets = Array.isArray(step.notes?.[0]) ? step.notes[0] : (step.notes || []);
         NoteHighlighter.setTarget(targets);
         NoteHighlighter.showTargetHints();
+
+        // Demo: nghe nốt mẫu
+        document.getElementById('lv-prac-demo')?.addEventListener('click', () => {
+            DemoPlayer.playNotes(targets, 900);
+        });
     }
 
-    // ── Play step (falling notes) ──────────────────────────────────
+    // ── Play step (Simply Piano-style falling notes) ───────────────
     function _renderPlay(container, step, state) {
-        const seq  = step.sequence || [];
-        const bpm  = step.bpm || 70;
-        const idx  = state.sequenceIdx;
+        const seq = step.sequence || [];
+        const bpm = step.bpm || 70;
+        const effectiveBpm = () => Math.round(bpm * _currentSpeedMult);
 
-        const dotCount = Math.min(seq.length, 20);
+        const idx      = state.sequenceIdx;
+        const dotCount = Math.min(seq.length, 24);
         const dots = Array.from({ length: dotCount }, (_, i) =>
             `<div class="lv-seq-dot ${i < idx ? 'done' : i === idx ? 'current' : ''}"></div>`
         ).join('');
 
         container.innerHTML = `
             <div class="lv-play">
-                <div class="lv-play-controls">
-                    <button class="lv-play-mode-btn ${_waitMode ? 'active' : ''}" id="wait-mode-btn">
-                        ⏸ Chờ nốt đúng
-                    </button>
-                    <span class="lv-bpm-display">♩= ${bpm} BPM</span>
+
+                <!-- Simply Piano-style top control bar -->
+                <div class="lv-play-topbar">
+                    <div class="lv-ctrl-seg" id="lv-speed-group" title="Tốc độ luyện tập">
+                        ${[['0.5','50%'],['0.75','75%'],['1','100%']].map(([m,l]) =>
+                            `<button class="lv-ctrl-seg-btn${_currentSpeedMult == m ? ' active' : ''}" data-mult="${m}">${l}</button>`
+                        ).join('')}
+                    </div>
+                    <div class="lv-ctrl-sep"></div>
+                    <div class="lv-ctrl-seg" id="lv-hand-group" title="Chọn tay luyện">
+                        <button class="lv-ctrl-seg-btn${_currentHand === 'left'  ? ' active' : ''}" data-hand="left"  title="Tay trái">✋</button>
+                        <button class="lv-ctrl-seg-btn${_currentHand === 'both'  ? ' active' : ''}" data-hand="both"  title="Cả hai tay">🎹</button>
+                        <button class="lv-ctrl-seg-btn${_currentHand === 'right' ? ' active' : ''}" data-hand="right" title="Tay phải">🤚</button>
+                    </div>
+                    <div class="lv-ctrl-sep"></div>
+                    <button class="lv-ctrl-tog${_waitMode ? ' active' : ''}" id="lv-wait-btn" title="Chờ bấm đúng mới tiếp tục">⏸</button>
+                    <button class="lv-demo-btn" id="lv-play-demo" title="Nghe mẫu">👁</button>
+                    <span class="lv-bpm-label">♩ <span id="lv-bpm-num">${effectiveBpm()}</span></span>
+                    <select class="lv-voice-select" id="lv-voice-sel" title="Âm thanh" style="margin-left:auto">
+                        ${AudioEngine.getVoices().map(v =>
+                            `<option value="${v.id}"${v.id === AudioEngine.getVoice() ? ' selected' : ''}>${v.label}</option>`
+                        ).join('')}
+                    </select>
                 </div>
+
+                <!-- Progress dots -->
                 <div class="lv-seq-progress">
                     ${dots}
                     <span class="lv-seq-progress-text">${idx}/${seq.length}</span>
                 </div>
-                <div id="lv-falling-area" style="flex:1;min-height:0;position:relative;background:rgba(0,0,0,0.4)">
-                    <canvas id="falling-canvas-lv" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+
+                <!-- Falling notes canvas -->
+                <div class="lv-falling-area" id="lv-falling-area">
+                    <div class="lv-countdown-overlay" id="lv-countdown-overlay">
+                        <div class="lv-countdown-num" id="lv-countdown-num">4</div>
+                    </div>
+                    <canvas id="falling-canvas-lv"></canvas>
                 </div>
-                <div id="lv-piano-play" style="height:210px;flex-shrink:0;overflow:hidden;
-                    display:flex;align-items:center;justify-content:center;background:rgba(10,10,20,0.8)">
-                </div>
+
+                <!-- Piano keyboard -->
+                <div class="lv-piano-play-area" id="lv-piano-play"></div>
+
             </div>`;
 
-        document.getElementById('wait-mode-btn')?.addEventListener('click', e => {
+        // ── Wire controls ──────────────────────────────────────────────────
+        document.getElementById('lv-speed-group')?.addEventListener('click', e => {
+            const btn = e.target.closest('[data-mult]');
+            if (!btn) return;
+            _currentSpeedMult = parseFloat(btn.dataset.mult);
+            document.querySelectorAll('#lv-speed-group .lv-ctrl-seg-btn')
+                .forEach(b => b.classList.toggle('active', b === btn));
+            document.getElementById('lv-bpm-num').textContent = effectiveBpm();
+            _restartFalling(seq, effectiveBpm());
+        });
+
+        document.getElementById('lv-hand-group')?.addEventListener('click', e => {
+            const btn = e.target.closest('[data-hand]');
+            if (!btn) return;
+            _currentHand = btn.dataset.hand;
+            document.querySelectorAll('#lv-hand-group .lv-ctrl-seg-btn')
+                .forEach(b => b.classList.toggle('active', b === btn));
+            FallingNotes.setHandFilter(_currentHand);
+            _restartFalling(seq, effectiveBpm());
+        });
+
+        document.getElementById('lv-wait-btn')?.addEventListener('click', e => {
             _waitMode = !_waitMode;
             e.currentTarget.classList.toggle('active', _waitMode);
             FallingNotes.setWaitMode(_waitMode);
         });
 
-        // Mount piano
-        _mountPiano('lv-piano-play', '36');
+        document.getElementById('lv-voice-sel')?.addEventListener('change', e => {
+            AudioEngine.setVoice(e.target.value);
+        });
 
-        // Init falling notes
-        const area   = document.getElementById('lv-falling-area');
-        const canvas = document.getElementById('falling-canvas-lv');
-        if (canvas && area) {
-            // Use ResizeObserver for correct sizing
-            const setSize = () => {
-                canvas.width  = area.clientWidth  || 400;
-                canvas.height = area.clientHeight || 180;
-            };
-            setSize();
-            new ResizeObserver(setSize).observe(area);
+        const demoBtn = document.getElementById('lv-play-demo');
+        demoBtn?.addEventListener('click', () => {
+            DemoPlayer.playSequence(seq, Math.round(bpm * 0.9), {
+                btnEl: demoBtn, bpmScale: 1,
+            });
+        });
 
+        // ── Init piano + FallingNotes after layout ─────────────────────────
+        requestAnimationFrame(() => {
+            const area   = document.getElementById('lv-falling-area');
+            const canvas = document.getElementById('falling-canvas-lv');
+            if (!canvas || !area) return;
+
+            _mountPiano('lv-piano-play', '36');
+
+            // Canvas width = keyboard pixel width (no offset needed).
+            // overflow:hidden on lv-falling-area clips to container width,
+            // same as piano container — so bars align with visible keys perfectly.
+            const W = _pianoTotalWidth || 840;
+            const H = Math.max(60, area.clientHeight || 240);
+
+            canvas.width  = W;
+            canvas.height = H;
+            canvas.style.cssText = `position:absolute; top:0; left:50%; transform:translateX(-50%); width:${W}px; height:${H}px;`;
+
+            FallingNotes.setHandFilter(_currentHand);
             FallingNotes.init(canvas, _pianoNoteMap);
             FallingNotes.setWaitMode(_waitMode);
-            FallingNotes.loadSequence(seq, bpm);
+            FallingNotes.loadSequence(seq, effectiveBpm());
 
             FallingNotes.onSequenceEnd(() => {
                 const btn = document.getElementById('lv-next');
@@ -308,17 +481,60 @@ const LearnView = (() => {
             });
 
             FallingNotes.start();
-        }
 
-        // Set first target
-        if (seq.length > 0) {
-            const first = Array.isArray(seq[0].midi) ? seq[0].midi : [seq[0].midi];
-            NoteHighlighter.setTarget(first);
-            NoteHighlighter.showTargetHints();
-        }
+            // Resize: only update height (width is fixed = keyboard width)
+            new ResizeObserver(() => {
+                const h = Math.max(60, area.clientHeight || H);
+                canvas.height = h;
+                canvas.style.height = h + 'px';
+                FallingNotes.resize(W, h);
+            }).observe(area);
+
+            // Set first target highlight
+            if (seq.length > 0) {
+                const first = Array.isArray(seq[0].midi) ? seq[0].midi : [seq[0].midi];
+                NoteHighlighter.setTarget(first);
+                NoteHighlighter.showTargetHints();
+            }
+
+            // Countdown overlay before interaction
+            _runCountdown(effectiveBpm());
+        });
     }
 
-    let _waitMode = true;
+    // Restart FallingNotes with new BPM/hand (no countdown, no canvas resize)
+    function _restartFalling(seq, bpm) {
+        FallingNotes.setHandFilter(_currentHand);
+        FallingNotes.stop();
+        FallingNotes.loadSequence(seq, bpm);
+        FallingNotes.start();
+    }
+
+    // Countdown overlay: 4-3-2-1 before play starts
+    function _runCountdown(bpm) {
+        const beatMs  = Math.round(60000 / Math.max(bpm, 40));
+        const overlay = document.getElementById('lv-countdown-overlay');
+        const numEl   = document.getElementById('lv-countdown-num');
+        if (!overlay || !numEl) return;
+
+        let count = 4;
+        const tick = () => {
+            if (!document.getElementById('lv-countdown-overlay')) return;
+            if (count > 0) {
+                numEl.textContent = String(count);
+                numEl.classList.remove('lv-countdown-pop');
+                void numEl.offsetWidth;
+                numEl.classList.add('lv-countdown-pop');
+                count--;
+                setTimeout(tick, beatMs);
+            } else {
+                overlay.style.transition = 'opacity 0.3s ease';
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.classList.add('sp-hidden'), 320);
+            }
+        };
+        tick();
+    }
 
     // ── Quiz step ──────────────────────────────────────────────────
     function _renderQuiz(container, step) {
@@ -412,7 +628,7 @@ const LearnView = (() => {
 
         document.getElementById('result-retry')?.addEventListener('click', () => startLesson(lessonId));
         document.getElementById('result-home')?.addEventListener('click', () => {
-            Router.go('home'); setTimeout(() => HomeView.render(), 100);
+            Router.go('home'); requestAnimationFrame(() => HomeView.render());
         });
     }
 
@@ -422,7 +638,8 @@ const LearnView = (() => {
         if (!container) return;
         Visualizer.destroy();
         const { canvas, noteMap } = Keyboard.render(containerId, layout);
-        _pianoNoteMap = noteMap;
+        _pianoNoteMap    = noteMap;
+        _pianoTotalWidth = canvas.width;   // keyboard's full native pixel width
         Visualizer.init(canvas, noteMap);
     }
 

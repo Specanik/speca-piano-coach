@@ -1,8 +1,17 @@
 /**
- * HomeView — renders the Home screen.
- * Shows: CTA card, stats, and Duolingo-style lesson path.
+ * HomeView — Simply Piano-style home screen.
+ * Vertical chapter path, continue card, stats, free play entry.
  */
 const HomeView = (() => {
+
+    /* Chapter definitions — group lessons into thematic sections */
+    const CHAPTERS = [
+        { id: 1, icon: '🎹', name: 'Nhập môn Piano', color: '#4a9eff', lessons: 4 },
+        { id: 2, icon: '🎵', name: 'Giai điệu đầu tiên', color: '#9b59b6', lessons: 4 },
+        { id: 3, icon: '🎼', name: 'Đọc nốt nhạc', color: '#e74c3c', lessons: 4 },
+        { id: 4, icon: '🎶', name: 'Hợp âm & Nhịp điệu', color: '#f39c12', lessons: 4 },
+        { id: 5, icon: '🌟', name: 'Bài hát hoàn chỉnh', color: '#00d4aa', lessons: 0 },
+    ];
 
     function render() {
         const el = document.getElementById('home-content');
@@ -12,52 +21,48 @@ const HomeView = (() => {
         const lessons  = LessonsData.getAll();
         const progress = ProgressStore.getProgress();
 
-        // Find current lesson (first incomplete)
         let currentIdx = lessons.findIndex(l => !ProgressStore.isCompleted(l.id));
         if (currentIdx === -1) currentIdx = lessons.length - 1;
         const currentLesson = lessons[currentIdx];
 
         const totalCompleted  = stats.totalCompleted;
-        const overallProgress = Math.round((totalCompleted / lessons.length) * 100);
+        const overallProgress = Math.round((totalCompleted / Math.max(1, lessons.length)) * 100);
 
-        // Adaptive suggestion
         const suggestion = (typeof AdaptiveEngine !== 'undefined')
             ? AdaptiveEngine.getSuggestion() : null;
 
-        // Daily challenge
         const daily = (typeof AdaptiveEngine !== 'undefined' && typeof SongsData !== 'undefined')
             ? AdaptiveEngine.getDailyChallenge() : null;
 
         const suggestionHTML = suggestion && suggestion.type !== 'start' ? `
-            <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;
-                background:rgba(74,158,255,0.07);border:1px solid rgba(74,158,255,0.15);
-                border-radius:10px;margin:0 0 10px;font-size:0.78rem;color:#8ab8d8;line-height:1.5">
+            <div class="home-suggestion">
                 <span style="flex-shrink:0;font-size:1.1rem">💡</span>
                 <div>${suggestion.message}</div>
             </div>` : '';
 
         const dailyHTML = daily ? `
-            <div style="background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.2);
-                border-radius:12px;padding:12px 14px;margin:0 0 10px;cursor:pointer"
-                id="daily-challenge-card">
-                <div style="font-size:0.65rem;font-weight:700;color:#f0c040;text-transform:uppercase;
-                    letter-spacing:0.08em;margin-bottom:5px">⭐ Thử thách hôm nay</div>
-                <div style="font-size:0.88rem;font-weight:700;color:#e0eaff">
+            <div class="home-daily-card" id="daily-challenge-card">
+                <div class="home-daily-label">⭐ Thử thách hôm nay</div>
+                <div class="home-daily-title">
                     ${daily.song?.thumbnail || '🎵'} ${daily.song?.title || 'Bài hát ngẫu nhiên'}
                 </div>
-                <div style="font-size:0.72rem;color:#8a9aaa;margin-top:3px">💡 ${daily.tip}</div>
+                <div class="home-daily-tip">💡 ${daily.tip}</div>
             </div>` : '';
 
         el.innerHTML = `
             <div class="home-view">
+
+                <!-- Hero section -->
                 <div class="home-hero">
                     <div class="home-greeting">${_greeting()}</div>
-
                     ${suggestionHTML}
 
+                    <!-- Continue card -->
                     <div class="home-cta-card" id="home-cta">
                         <div class="home-cta-badge">⚡ Tiếp tục học</div>
-                        <div class="home-cta-title">${currentLesson.thumbnail} ${currentLesson.title}</div>
+                        <div class="home-cta-title">
+                            ${currentLesson.thumbnail} ${currentLesson.title}
+                        </div>
                         <div class="home-cta-sub">${currentLesson.description}</div>
                         <div class="home-cta-progress">
                             <div class="home-progress-bar">
@@ -73,10 +78,11 @@ const HomeView = (() => {
                     ${dailyHTML}
                 </div>
 
+                <!-- Stats row -->
                 <div class="home-stats-row">
                     <div class="home-stat-card">
                         <span class="home-stat-value">🔥${stats.streakDays}</span>
-                        <span class="home-stat-label">Ngày liên tiếp</span>
+                        <span class="home-stat-label">Chuỗi ngày</span>
                     </div>
                     <div class="home-stat-card">
                         <span class="home-stat-value">⚡${stats.xp}</span>
@@ -88,17 +94,33 @@ const HomeView = (() => {
                     </div>
                 </div>
 
+                <!-- Section title -->
                 <div class="home-section-header">
                     <div class="home-section-title">Lộ trình học tập</div>
                     <button class="home-section-link" id="home-view-all">Xem tất cả</button>
                 </div>
 
+                <!-- Vertical lesson path -->
                 <div class="lesson-path" id="lesson-path">
                     ${_renderPath(lessons, currentIdx, progress)}
                 </div>
+
+                <!-- Free play card -->
+                <div class="home-free-play-card" id="home-free-play-btn">
+                    <div class="home-free-play-icon">🎹</div>
+                    <div class="home-free-play-info">
+                        <div class="home-free-play-title">Chơi tự do</div>
+                        <div class="home-free-play-sub">Chơi piano không giới hạn — MIDI, hợp âm, thu âm</div>
+                    </div>
+                    <div class="home-free-play-arrow">›</div>
+                </div>
+
             </div>`;
 
-        // Events
+        _bindEvents(currentLesson, null, daily);
+    }
+
+    function _bindEvents(currentLesson, _lessons, daily) {
         document.getElementById('home-start-btn')?.addEventListener('click', () => {
             _startLesson(currentLesson.id);
         });
@@ -106,11 +128,7 @@ const HomeView = (() => {
         document.getElementById('daily-challenge-card')?.addEventListener('click', () => {
             if (daily?.song) {
                 Router.go('practice');
-                setTimeout(() => {
-                    // Switch to songs tab and start playing
-                    const songsBtn = document.querySelector('[data-ptab="songs"]');
-                    songsBtn?.click();
-                }, 100);
+                requestAnimationFrame(() => document.querySelector('[data-ptab="songs"]')?.click());
             }
         });
 
@@ -118,8 +136,12 @@ const HomeView = (() => {
             Router.go('learn');
         });
 
-        // Path node clicks
-        document.querySelectorAll('.path-node:not(.locked)').forEach(node => {
+        document.getElementById('home-free-play-btn')?.addEventListener('click', () => {
+            Router.go('freeplay');
+            requestAnimationFrame(() => FreePlayView?.show?.());
+        });
+
+        document.querySelectorAll('.path-node-item:not(.locked)').forEach(node => {
             node.addEventListener('click', () => {
                 const id = node.dataset.lessonId;
                 if (id) _startLesson(id);
@@ -128,47 +150,69 @@ const HomeView = (() => {
     }
 
     function _renderPath(lessons, currentIdx, progress) {
-        // Layout: zigzag pattern — groups of 3 in alternating alignment
-        const rows = [];
-        let i = 0;
+        const lessonsPerChapter = 4;
+        let html = '';
 
-        while (i < lessons.length) {
-            const group = lessons.slice(i, i + 3);
-            const direction = Math.floor(i / 3) % 2 === 0 ? 'right' : 'left';
-            rows.push({ group, startIdx: i, direction });
-            i += 3;
+        // Group lessons into chapters
+        for (let ci = 0; ci < CHAPTERS.length; ci++) {
+            const ch      = CHAPTERS[ci];
+            const start   = ci * lessonsPerChapter;
+            const end     = Math.min(start + lessonsPerChapter, lessons.length);
+            const group   = lessons.slice(start, end);
+            if (group.length === 0 && ci > 0) continue;
+
+            const completedInChapter = group.filter(l => ProgressStore.isCompleted(l.id)).length;
+
+            html += `
+                <div class="path-chapter">
+                    <div class="path-chapter-header" data-ch="${ch.id}" style="margin-top:${ci > 0 ? '16px' : '0'}">
+                        <div class="path-chapter-icon">${ch.icon}</div>
+                        <div class="path-chapter-info">
+                            <div class="path-chapter-num">Chương ${ch.id}</div>
+                            <div class="path-chapter-name">${ch.name}</div>
+                        </div>
+                        <div class="path-chapter-count">${completedInChapter}/${group.length}</div>
+                    </div>
+                    <div class="path-nodes">
+                        ${group.map((lesson, j) => _renderNode(lesson, start + j, currentIdx, progress)).join('')}
+                    </div>
+                </div>`;
         }
 
-        return rows.map(({ group, startIdx, direction }) => {
-            const nodesHTML = group.map((lesson, j) => {
-                const idx    = startIdx + j;
-                const result = progress.completedLessons[lesson.id];
-                const stars  = result?.stars || 0;
-                const state  = result ? 'done'
-                    : idx === currentIdx ? 'current'
-                    : idx > currentIdx ? 'locked' : 'done';
+        return html;
+    }
 
-                const starsHTML = state === 'done'
-                    ? `<div class="path-star-count">${stars}★</div>` : '';
+    function _renderNode(lesson, idx, currentIdx, progress) {
+        const result = progress.completedLessons[lesson.id];
+        const stars  = result?.stars || 0;
+        const state  = result         ? 'done'
+                     : idx === currentIdx ? 'current'
+                     : idx > currentIdx   ? 'locked'
+                     : 'done';
 
-                const connector = j < group.length - 1
-                    ? `<div class="path-connector ${state === 'done' ? 'done-line' : ''}"></div>`
-                    : '';
+        let overlay = '';
+        if (state === 'done') {
+            overlay = `<div class="path-done-check">✓</div>`;
+        } else if (state === 'locked') {
+            overlay = `<div class="path-lock-icon">🔒</div>`;
+        }
 
-                return `
-                    <div class="path-node ${state}" data-lesson-id="${lesson.id}" title="${lesson.title}">
-                        <div class="path-node-circle">
-                            ${lesson.thumbnail}
-                            ${starsHTML}
-                        </div>
-                        <div class="path-node-label">${lesson.title.split(' ').slice(0, 2).join(' ')}</div>
-                    </div>
-                    ${connector}`;
-            }).join('');
+        const starBadge = state === 'done' && stars > 0
+            ? `<div class="path-star-count">${stars}★</div>` : '';
 
-            const offsetClass = direction === 'right' ? 'offset-right' : 'offset-left';
-            return `<div class="path-row ${offsetClass}">${nodesHTML}</div>`;
-        }).join('');
+        const ctaTag = state === 'current'
+            ? `<div class="path-node-cta">Nhấn để học ▶</div>` : '';
+
+        return `
+            <div class="path-node-item ${state}" data-lesson-id="${lesson.id}">
+                <div class="path-node-circle">
+                    ${lesson.thumbnail}
+                    ${overlay}
+                    ${starBadge}
+                </div>
+                <div class="path-node-label">${lesson.title}</div>
+                ${ctaTag}
+            </div>`;
     }
 
     function _greeting() {
@@ -180,8 +224,7 @@ const HomeView = (() => {
 
     function _startLesson(lessonId) {
         Router.go('learn');
-        // Small delay to let view transition complete
-        setTimeout(() => LearnView.startLesson(lessonId), 50);
+        requestAnimationFrame(() => LearnView.startLesson(lessonId));
     }
 
     return { render };

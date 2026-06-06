@@ -163,12 +163,13 @@ const TheoryRenderer = (() => {
                 const midis = JSON.parse(btn.dataset.midi || '[]');
                 // Arpeggio play
                 midis.forEach((m, i) => {
+                    const id = `th_${m}_${i}`;
                     setTimeout(() => {
-                        AudioEngine.startNote(`th_${m}_${Date.now()}`, m);
+                        AudioEngine.startNote(id, m);
                         Visualizer?.noteOn?.(m);
                     }, i * 110);
                     setTimeout(() => {
-                        AudioEngine.stopNote(`th_${m}_${Date.now()}`);
+                        AudioEngine.stopNote(id);
                         Visualizer?.noteOff?.(m);
                     }, i * 110 + 900);
                 });

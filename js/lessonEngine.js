@@ -30,6 +30,21 @@ const LessonEngine = (() => {
     let _stepStartMs  = 0;        // timestamp when current step started
     let _onChange     = null;
 
+    // Debounce: prevent double-counting rapid MIDI bursts (same note, same step)
+    const _DEBOUNCE_MS = window.PianoConfig?.lesson?.inputDebounceMs ?? 50;
+    const _lastNoteMs  = new Map();   // key: `${stepIdx}:${midi}` → timestamp
+
+    function _isDuplicate(midi) {
+        const key = `${_stepIndex}:${midi}`;
+        const now = performance.now();
+        const last = _lastNoteMs.get(key) ?? 0;
+        if (now - last < _DEBOUNCE_MS) return true;
+        _lastNoteMs.set(key, now);
+        // Keep map size bounded
+        if (_lastNoteMs.size > 200) _lastNoteMs.clear();
+        return false;
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────
     function currentStep() {
         if (!_lesson || _stepIndex < 0) return null;
@@ -123,9 +138,7 @@ const LessonEngine = (() => {
         // Set target notes for visual highlighting
         if (typeof NoteHighlighter !== 'undefined') {
             if (step.type === 'practice') {
-                const targets = Array.isArray(step.notes[0])
-                    ? step.notes[0]
-                    : step.notes || [];
+                const targets = _resolveNotes(step.notes);
                 NoteHighlighter.setTarget(targets);
                 NoteHighlighter.showTargetHints();
             } else if (step.type === 'play' && step.sequence?.length > 0) {
@@ -152,9 +165,9 @@ const LessonEngine = (() => {
         }
 
         if (step.type === 'practice') {
-            _checkPractice(step);
+            if (!_isDuplicate(midi)) _checkPractice(step);
         } else if (step.type === 'play') {
-            _checkPlaySequence(step, midi);
+            if (!_isDuplicate(midi)) _checkPlaySequence(step, midi);
         }
     }
 
@@ -165,11 +178,16 @@ const LessonEngine = (() => {
         }
     }
 
+    // Normalize step.notes into a flat midi array regardless of nesting format.
+    // Handles: [60,64,67], [[60,64,67]], undefined.
+    function _resolveNotes(notes) {
+        if (!notes?.length) return [];
+        return Array.isArray(notes[0]) ? notes[0] : notes;
+    }
+
     // ── Practice step logic ────────────────────────────────────────────────
     function _checkPractice(step) {
-        const targetNotes = Array.isArray(step.notes[0])
-            ? step.notes[0]
-            : step.notes || [];
+        const targetNotes = _resolveNotes(step.notes);
 
         if (typeof NoteHighlighter !== 'undefined' &&
             NoteHighlighter.isChordComplete(_pressedNotes)) {

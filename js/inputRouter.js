@@ -1,57 +1,73 @@
 /**
- * InputRouter — single unified source of truth for all note events.
+ * InputRouter — unified note event bus.
  *
- * Three input sources feed into one pair of handlers:
- *   • Keyboard (PC keyboard via Keyboard module)
- *   • MIDI     (hardware piano via MidiInput module)
- *   • Mic      (pitch detection via PitchDetector module)
+ * Ba nguồn input:
+ *   • Keyboard  (PC keyboard — Keyboard module)
+ *   • MIDI      (hardware piano — MidiInput module, với velocity + sustain)
+ *   • Mic       (pitch detection — PitchDetector module)
  *
- * Consumers register ONE pair of callbacks and never care about the source:
- *   InputRouter.onNoteOn(midi  => { ... })
- *   InputRouter.onNoteOff(midi => { ... })
+ * Consumers đăng ký một cặp callback, không cần biết nguồn:
+ *   InputRouter.onNoteOn(cb)      cb(midi, velocity)
+ *   InputRouter.onNoteOff(cb)     cb(midi)
+ *   InputRouter.onStateChange(cb) cb(state)  — multi-listener
  *
  * Source management:
- *   InputRouter.enableMidi()        → Promise<bool>
- *   InputRouter.enableMic()         → Promise<bool>
+ *   InputRouter.enableMidi()   → Promise<bool>
  *   InputRouter.disableMidi()
+ *   InputRouter.enableMic()    → Promise<bool>
  *   InputRouter.disableMic()
- *   InputRouter.getState()          → { midi, mic, midiDevices }
- *   InputRouter.onStateChange(cb)   → cb(state) whenever a source toggles
+ *   InputRouter.getState()     → { midi, mic, midiDevices, sustainOn }
  */
 const InputRouter = (() => {
-    let _onNoteOn    = null;
-    let _onNoteOff   = null;
-    let _onStateChange = null;
+    let _onNoteOn  = null;
+    let _onNoteOff = null;
+    const _stateListeners = [];   // multiple subscribers (MidiTester, DevMode, AppShell…)
 
     const state = {
         midi:        false,
         mic:         false,
-        midiDevices: []
+        midiDevices: [],
+        sustainOn:   false,
     };
 
     // ── Internal emit helpers ──────────────────────────────────────────────
-    function emitNoteOn(midi)  { _onNoteOn  && _onNoteOn(midi);  }
-    function emitNoteOff(midi) { _onNoteOff && _onNoteOff(midi); }
+    function emitNoteOn(midi, velocity = 80)  { _onNoteOn  && _onNoteOn(midi, velocity);  }
+    function emitNoteOff(midi)                { _onNoteOff && _onNoteOff(midi); }
 
     function emitState() {
-        _onStateChange && _onStateChange({ ...state });
+        const s = { ...state };
+        _stateListeners.forEach(cb => cb(s));
     }
 
-    // ── Wire up keyboard (always active) ──────────────────────────────────
-    // Keyboard module already emits events; we re-route them here.
-    // Called once during app init after Keyboard is ready.
+    // ── Keyboard (always active, velocity from settings or default 80) ────
     function attachKeyboard() {
         if (typeof Keyboard === 'undefined') return;
-        Keyboard.onNoteOnHandler(emitNoteOn);
-        Keyboard.onNoteOffHandler(emitNoteOff);
+        Keyboard.onNoteOnHandler(midi => {
+            const vel = window.SettingsPanel?.get('keyboardVelocity') ?? 80;
+            emitNoteOn(midi, vel);
+        });
+        Keyboard.onNoteOffHandler(midi => emitNoteOff(midi));
     }
 
-    // ── MIDI source ────────────────────────────────────────────────────────
+    // ── MIDI ───────────────────────────────────────────────────────────────
     async function enableMidi() {
         if (typeof MidiInput === 'undefined') return false;
 
-        MidiInput.onNoteOn(emitNoteOn);
-        MidiInput.onNoteOff(emitNoteOff);
+        // Prewarm AudioContext sebelum connect agar tidak ada init-delay di note pertama
+        if (typeof AudioEngine !== 'undefined') AudioEngine.prewarm();
+
+        MidiInput.onNoteOn((midi, velocity) => emitNoteOn(midi, velocity));
+        MidiInput.onNoteOff(midi => emitNoteOff(midi));
+
+        // Sustain pedal → AudioEngine trực tiếp (bypass routing để tối thiểu latency)
+        MidiInput.onSustain(isOn => {
+            state.sustainOn = isOn;
+            if (typeof AudioEngine !== 'undefined') {
+                isOn ? AudioEngine.sustainOn() : AudioEngine.sustainOff();
+            }
+            emitState();
+        });
+
         MidiInput.onStatusChange(({ connected, devices }) => {
             state.midi        = connected;
             state.midiDevices = devices;
@@ -67,19 +83,22 @@ const InputRouter = (() => {
 
     function disableMidi() {
         if (typeof MidiInput === 'undefined') return;
+        // Release sustain if held when disconnecting
+        if (state.sustainOn && typeof AudioEngine !== 'undefined') {
+            AudioEngine.sustainOff();
+        }
         MidiInput.disconnect();
         state.midi        = false;
         state.midiDevices = [];
+        state.sustainOn   = false;
         emitState();
     }
 
-    // ── Mic source ─────────────────────────────────────────────────────────
+    // ── Mic ────────────────────────────────────────────────────────────────
     async function enableMic() {
         if (typeof PitchDetector === 'undefined') return false;
-
-        PitchDetector.onNoteOn(emitNoteOn);
-        PitchDetector.onNoteOff(emitNoteOff);
-
+        PitchDetector.onNoteOn(midi  => emitNoteOn(midi, 80));
+        PitchDetector.onNoteOff(midi => emitNoteOff(midi));
         const ok = await PitchDetector.start();
         state.mic = ok;
         emitState();
@@ -99,9 +118,9 @@ const InputRouter = (() => {
         disableMidi,
         enableMic,
         disableMic,
-        getState: () => ({ ...state }),
-        onNoteOn:     cb => { _onNoteOn     = cb; },
-        onNoteOff:    cb => { _onNoteOff    = cb; },
-        onStateChange:cb => { _onStateChange = cb; },
+        getState:     () => ({ ...state }),
+        onNoteOn:     cb => { _onNoteOn  = cb; },
+        onNoteOff:    cb => { _onNoteOff = cb; },
+        onStateChange:cb => { if (cb) _stateListeners.push(cb); },
     };
 })();

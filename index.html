@@ -14,8 +14,12 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/lesson.css">
     <link rel="stylesheet" href="css/app-shell.css">
+    <link rel="stylesheet" href="css/sp-design.css">
+    <link rel="stylesheet" href="css/home-view.css">
     <link rel="stylesheet" href="css/learn-view.css">
+    <link rel="stylesheet" href="css/free-play.css">
     <link rel="stylesheet" href="css/theory-cards.css">
+    <link rel="stylesheet" href="css/settings-panel.css">
 </head>
 <body>
 
@@ -57,6 +61,29 @@
     </div>
 </div>
 
+<!-- ── Splash screen (fades out once DOMContentLoaded fires) ── -->
+<div id="splash" style="
+    position:fixed;inset:0;z-index:9000;
+    background:#0d0d17;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    transition:opacity 0.35s ease, visibility 0s linear 0.35s;
+    pointer-events:none">
+    <div style="font-size:3.5rem;animation:splashBounce 1.2s ease-in-out infinite">🎹</div>
+    <div style="font-size:1rem;font-weight:800;letter-spacing:0.12em;color:#7ab8ff;text-transform:uppercase">
+        Piano Coach
+    </div>
+    <div style="width:48px;height:3px;background:rgba(74,158,255,0.2);border-radius:2px;overflow:hidden;margin-top:4px">
+        <div id="splash-bar" style="height:100%;background:linear-gradient(90deg,#4a9eff,#7b5ea7);
+            border-radius:2px;width:0%;transition:width 0.4s ease"></div>
+    </div>
+</div>
+<style>
+@keyframes splashBounce {
+    0%,100%{transform:translateY(0)scale(1)}
+    50%{transform:translateY(-8px)scale(1.05)}
+}
+</style>
+
 <!-- ── App Shell ── -->
 <div id="app" class="app-layout">
 
@@ -70,7 +97,10 @@
         <div class="top-bar-stats" id="top-bar-stats">
             <div class="stat-pill stat-pill-streak" id="stat-streak" title="Chuỗi ngày liên tiếp">🔥 0</div>
             <div class="stat-pill stat-pill-xp"     id="stat-xp"     title="Điểm kinh nghiệm">⚡ 0</div>
+            <div class="stat-pill stat-pill-midi hidden" id="stat-midi" title="MIDI đang kết nối" style="color:#50c878;background:rgba(80,200,120,0.1);border-color:rgba(80,200,120,0.25)"></div>
+            <div class="stat-pill hidden" id="stat-sustain" title="Sustain pedal đang giữ" style="color:#c864ff;background:rgba(200,100,255,0.1);border-color:rgba(200,100,255,0.25);font-size:0.68rem">🦶 Pedal</div>
         </div>
+        <button class="settings-gear-btn" id="settings-gear-btn" title="Cài đặt (Ctrl+Shift+,)">⚙</button>
     </header>
 
     <!-- View container -->
@@ -92,11 +122,11 @@
             <div class="practice-header">
                 <span class="practice-title">🎹 Tự luyện</span>
                 <div class="practice-tools">
-                    <button class="practice-tool-btn" id="midi-toggle-btn" title="Kết nối MIDI">
+                    <button class="practice-tool-btn midi-toggle-btn" id="midi-toggle-btn" title="Kết nối MIDI">
                         <span class="practice-tool-icon">🎛️</span>
                         <span>MIDI</span>
                     </button>
-                    <button class="practice-tool-btn" id="mic-toggle-btn" title="Microphone">
+                    <button class="practice-tool-btn mic-toggle-btn" id="mic-toggle-btn" title="Microphone">
                         <span class="practice-tool-icon">🎤</span>
                         <span>Mic</span>
                     </button>
@@ -132,8 +162,15 @@
                 <!-- Metronome bar (hidden by default) -->
                 <div id="metronome-bar" class="metronome-bar hidden"></div>
 
-                <!-- Controls: theme + layout -->
+                <!-- Controls: voice + theme + layout -->
                 <div class="practice-controls-row" id="practice-controls">
+                    <!-- Voice (sound) selector -->
+                    <div class="control-row control-row-full">
+                        <span class="control-label">Âm thanh</span>
+                        <div class="voice-switcher" id="voice-switcher">
+                            <!-- populated by AppShell -->
+                        </div>
+                    </div>
                     <div class="control-row">
                         <span class="control-label">Theme</span>
                         <div class="theme-switcher">
@@ -253,6 +290,11 @@
             <div id="profile-content"></div>
         </div>
 
+        <!-- FREE PLAY VIEW -->
+        <div class="view" data-view="freeplay" id="freeplay-view">
+            <!-- Populated by FreePlayView.js -->
+        </div>
+
     </div><!-- /view-container -->
 
     <!-- Bottom navigation -->
@@ -265,8 +307,12 @@
             <span class="nav-btn-icon">📚</span>
             <span class="nav-btn-label">Học</span>
         </button>
-        <button class="nav-btn" data-view="practice" id="nav-practice">
+        <button class="nav-btn nav-btn-play" data-view="freeplay" id="nav-freeplay">
             <span class="nav-btn-icon">🎹</span>
+            <span class="nav-btn-label">Chơi</span>
+        </button>
+        <button class="nav-btn" data-view="practice" id="nav-practice">
+            <span class="nav-btn-icon">🎼</span>
             <span class="nav-btn-label">Luyện</span>
         </button>
         <button class="nav-btn" data-view="profile" id="nav-profile">
@@ -285,6 +331,9 @@
         document.body.appendChild(div);
     };
 </script>
+
+<!-- Config (must load first — all modules read window.PianoConfig) -->
+<script src="js/config.js"></script>
 
 <!-- Core audio + input -->
 <script src="js/audio.js"></script>
@@ -318,15 +367,19 @@
 <script src="js/router.js"></script>
 <script src="js/metronome.js"></script>
 <script src="js/fallingNotes.js"></script>
+<script src="js/demoPlayer.js"></script>
 <script src="js/views/homeView.js"></script>
 <script src="js/views/learnView.js"></script>
 <script src="js/views/profileView.js"></script>
+<script src="js/views/freePlayView.js"></script>
 <script src="js/theoryRenderer.js"></script>
 <script src="js/midiTester.js"></script>
 <script src="js/adaptiveEngine.js"></script>
 <script src="js/comboSystem.js"></script>
 <script src="js/views/onboarding.js"></script>
 <script src="js/views/songsView.js"></script>
+<script src="js/settingsPanel.js"></script>
+<script src="js/devMode.js"></script>
 <script src="js/appShell.js"></script>
 
 <!-- Bootstrap (must be last) -->

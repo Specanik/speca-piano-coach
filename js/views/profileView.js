@@ -96,23 +96,18 @@ const ProfileView = (() => {
                         const r = progress.completedLessons[l.id];
                         const stars = r?.stars || 0;
                         return `
-                            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;
-                                        background:rgba(100,160,255,${r ? '0.08' : '0.03'});
-                                        border:1px solid rgba(100,160,255,${r ? '0.18' : '0.07'});
-                                        border-radius:10px;">
-                                <span style="font-size:1.2rem">${l.thumbnail}</span>
-                                <div style="flex:1;min-width:0">
-                                    <div style="font-size:0.78rem;font-weight:700;
-                                                color:${r ? '#d0e8ff' : '#3a5878'};
-                                                white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                            <div class="profile-history-row ${r ? 'completed' : ''}">
+                                <span class="profile-history-icon">${l.thumbnail}</span>
+                                <div class="profile-history-info">
+                                    <div class="profile-history-title ${r ? 'done' : ''}">
                                         ${i + 1}. ${l.title}
                                     </div>
                                 </div>
-                                <div style="text-align:right;flex-shrink:0">
+                                <div class="profile-history-score">
                                     ${r ? `
-                                        <div style="font-size:0.8rem;color:#f0c040">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
-                                        <div style="font-size:0.68rem;color:#5a7898">${r.score}đ</div>
-                                    ` : `<div style="font-size:0.68rem;color:#2a3a4a">Chưa học</div>`}
+                                        <div class="profile-history-stars">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+                                        <div class="profile-history-pts">${r.score}đ</div>
+                                    ` : `<div class="profile-history-empty">Chưa học</div>`}
                                 </div>
                             </div>`;
                     }).join('')}

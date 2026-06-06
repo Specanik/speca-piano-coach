@@ -1,24 +1,36 @@
 /**
- * MidiInput — wraps Web MIDI API, emits noteOn/noteOff events.
- * Falls back gracefully when API is unavailable (desktop Chrome/Edge support it;
- * Firefox/Safari require a flag or polyfill).
+ * MidiInput — wraps Web MIDI API, emits noteOn/noteOff/sustain events.
  *
- * Usage:
- *   MidiInput.onNoteOn(midi  => { ... })
- *   MidiInput.onNoteOff(midi => { ... })
- *   MidiInput.connect()          // request MIDI access
- *   MidiInput.isSupported()      // true if Web MIDI API exists
- *   MidiInput.getDevices()       // array of { id, name } currently connected
+ * Supported MIDI messages:
+ *   • NOTE_ON  (0x90) velocity > 0  → onNoteOn(midi, velocity)
+ *   • NOTE_ON  (0x90) velocity = 0  → onNoteOff(midi)   (running status)
+ *   • NOTE_OFF (0x80)               → onNoteOff(midi)
+ *   • CC 64    (0xB0, 64, value)    → onSustain(bool)   sustain pedal
+ *
+ * API:
+ *   MidiInput.connect()           request MIDI access
+ *   MidiInput.disconnect()
+ *   MidiInput.isSupported()
+ *   MidiInput.getDevices()        → [{ id, name, state }]
+ *   MidiInput.onNoteOn(cb)        cb(midi, velocity)
+ *   MidiInput.onNoteOff(cb)       cb(midi)
+ *   MidiInput.onSustain(cb)       cb(isOn: boolean)
+ *   MidiInput.onStatusChange(cb)  cb({ connected, devices })
  */
 const MidiInput = (() => {
-    let _onNoteOn  = null;
-    let _onNoteOff = null;
-    let _midiAccess = null;
-    let _statusCallback = null;   // called with { connected: bool, devices: [] }
+    let _onNoteOn       = null;
+    let _onNoteOff      = null;
+    let _onSustain      = null;
+    let _onStatusChange = null;
+    let _midiAccess     = null;
 
-    // ── MIDI message constants ──────────────────────────────────────────────
-    const NOTE_ON  = 0x90;
-    const NOTE_OFF = 0x80;
+    // MIDI status byte types (upper nibble)
+    const NOTE_OFF       = 0x80;
+    const NOTE_ON        = 0x90;
+    const CONTROL_CHANGE = 0xB0;
+
+    // CC numbers
+    const CC_SUSTAIN = 64;
 
     function isSupported() {
         return typeof navigator !== 'undefined' && !!navigator.requestMIDIAccess;
@@ -34,22 +46,29 @@ const MidiInput = (() => {
     }
 
     function _broadcastStatus() {
-        if (_statusCallback) {
-            _statusCallback({
-                connected: getDevices().length > 0,
-                devices: getDevices()
-            });
+        if (_onStatusChange) {
+            _onStatusChange({ connected: getDevices().length > 0, devices: getDevices() });
         }
     }
 
     function _handleMessage(event) {
-        const [statusByte, note, velocity] = event.data;
-        const type = statusByte & 0xF0;  // strip channel nibble
+        const data = event.data;
+        if (!data || data.length < 2) return;
+
+        const status   = data[0];
+        const type     = status & 0xF0;   // strip channel nibble
+        const note     = data[1];
+        const velocity = data.length > 2 ? data[2] : 0;
 
         if (type === NOTE_ON && velocity > 0) {
-            _onNoteOn && _onNoteOn(note);
+            _onNoteOn && _onNoteOn(note, velocity);
         } else if (type === NOTE_OFF || (type === NOTE_ON && velocity === 0)) {
             _onNoteOff && _onNoteOff(note);
+        } else if (type === CONTROL_CHANGE) {
+            if (note === CC_SUSTAIN) {
+                // CC 64: value >= 64 = pedal down, < 64 = pedal up
+                _onSustain && _onSustain(velocity >= 64);
+            }
         }
     }
 
@@ -62,7 +81,7 @@ const MidiInput = (() => {
 
     async function connect() {
         if (!isSupported()) {
-            console.warn('[MidiInput] Web MIDI API not supported in this browser.');
+            console.warn('[MidiInput] Web MIDI API not supported.');
             return false;
         }
         try {
@@ -70,7 +89,6 @@ const MidiInput = (() => {
             _bindAllInputs();
             _broadcastStatus();
 
-            // Re-bind when devices are plugged/unplugged
             _midiAccess.onstatechange = () => {
                 _bindAllInputs();
                 _broadcastStatus();
@@ -78,7 +96,7 @@ const MidiInput = (() => {
 
             return true;
         } catch (err) {
-            console.warn('[MidiInput] MIDI access denied:', err);
+            console.warn('[MidiInput] Access denied:', err);
             return false;
         }
     }
@@ -97,6 +115,7 @@ const MidiInput = (() => {
         getDevices,
         onNoteOn:       cb => { _onNoteOn       = cb; },
         onNoteOff:      cb => { _onNoteOff      = cb; },
-        onStatusChange: cb => { _statusCallback = cb; },
+        onSustain:      cb => { _onSustain      = cb; },
+        onStatusChange: cb => { _onStatusChange = cb; },
     };
 })();

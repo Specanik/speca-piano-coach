@@ -1,76 +1,96 @@
 /**
- * SongsView — Song library + play-along UI.
+ * SongsView — Song library + play-along UI (Phase 2: Spotify-style redesign).
  * Renders inside the "Songs" practice tab.
- * Uses FallingNotes + InputRouter for real-time play-along.
  */
 const SongsView = (() => {
     let _activeSongId = null;
     let _playing      = false;
+    let _waitMode     = true;
+
+    const DIFF_INFO = {
+        beginner:     { label: '🟢 Cơ bản',    cls: 'beginner' },
+        intermediate: { label: '🟡 Trung cấp',  cls: 'intermediate' },
+        advanced:     { label: '🔴 Nâng cao',   cls: 'advanced' },
+    };
+
+    // BPM range mapped to fill percentage (60 BPM → 10%, 180 BPM → 100%)
+    function _bpmPct(bpm) { return Math.min(100, Math.max(5, ((bpm - 60) / 120) * 95 + 5)); }
 
     function render(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        const songs = SongsData.getAll();
-
-        const diffLabels  = { beginner: '🟢 Cơ bản', intermediate: '🟡 Trung cấp', advanced: '🔴 Nâng cao' };
+        const songs   = SongsData.getAll();
         const grouped = {};
         ['beginner', 'intermediate', 'advanced'].forEach(d => {
             grouped[d] = songs.filter(s => s.difficulty === d);
         });
 
         container.innerHTML = `
-            <div style="padding:12px 0">
-                <div style="padding:0 14px 10px;font-size:0.8rem;font-weight:700;color:#9ab8d8;
-                            letter-spacing:0.08em;text-transform:uppercase">
-                    🎵 Thư viện bài nhạc
-                </div>
-                ${['beginner', 'intermediate', 'advanced'].map(d => `
-                    <div style="margin-bottom:12px">
-                        <div style="padding:4px 14px 6px;font-size:0.7rem;font-weight:700;color:#4a6888">
-                            ${diffLabels[d]}
+            <div class="songs-library">
+                <div class="songs-library-heading">🎵 Thư viện bài nhạc</div>
+                ${['beginner', 'intermediate', 'advanced']
+                    .filter(d => grouped[d].length > 0)
+                    .map(d => `
+                    <div class="songs-section">
+                        <div class="songs-section-label ${d}">${DIFF_INFO[d].label}</div>
+                        <div class="songs-row">
+                            ${grouped[d].map(song => {
+                                const pct = _bpmPct(song.bpm);
+                                return `
+                                <div class="song-card ${_activeSongId === song.id && _playing ? 'playing' : ''}"
+                                    data-song-id="${song.id}" role="button" tabindex="0"
+                                    title="${song.title} · ${song.artist}">
+                                    <div class="song-card-art ${d}">
+                                        ${song.thumbnail}
+                                        <div class="song-card-bpm-bar">
+                                            <div class="song-card-bpm-fill" style="width:${pct}%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="song-card-title">${song.title}</div>
+                                    <div class="song-card-meta">${song.artist}</div>
+                                    <div class="song-card-bpm">♩ ${song.bpm} BPM</div>
+                                </div>`;
+                            }).join('')}
                         </div>
-                        ${grouped[d].map(song => `
-                            <div class="song-play-card" data-song-id="${song.id}"
-                                style="display:flex;align-items:center;gap:10px;padding:10px 14px;
-                                       cursor:pointer;border-bottom:1px solid rgba(100,160,255,0.06);
-                                       transition:background 0.15s;">
-                                <span style="font-size:1.5rem;flex-shrink:0">${song.thumbnail}</span>
-                                <div style="flex:1;min-width:0">
-                                    <div style="font-size:0.8rem;font-weight:700;color:#c8e0f0;
-                                                white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                                        ${song.title}
-                                    </div>
-                                    <div style="font-size:0.68rem;color:#4a6888;margin-top:1px">
-                                        ${song.artist} · ${song.bpm} BPM · ${song.timeSignature}
-                                    </div>
-                                </div>
-                                <button class="play-song-btn lv-btn lv-btn-primary"
-                                    data-song-id="${song.id}"
-                                    style="padding:6px 14px;font-size:0.72rem;flex-shrink:0;border-radius:8px">
-                                    ▶ Chơi
-                                </button>
-                            </div>
-                        `).join('')}
+                    </div>`
+                ).join('')}
+
+                <div class="now-playing-bar hidden" id="songs-now-playing">
+                    <div class="now-playing-thumb" id="snp-thumb"></div>
+                    <div class="now-playing-info">
+                        <div class="now-playing-title" id="snp-title"></div>
+                        <div class="now-playing-status">
+                            <div class="now-playing-pulse"></div>
+                            Đang phát
+                        </div>
                     </div>
-                `).join('')}
+                    <button class="now-playing-stop" id="snp-stop" title="Dừng lại">⏹</button>
+                </div>
             </div>`;
 
-        container.querySelectorAll('.play-song-btn').forEach(btn => {
-            btn.addEventListener('click', e => {
-                e.stopPropagation();
-                _playSong(btn.dataset.songId);
+        container.querySelectorAll('.song-card').forEach(card => {
+            card.addEventListener('click',  () => _playSong(card.dataset.songId));
+            card.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    _playSong(card.dataset.songId);
+                }
             });
         });
 
-        container.querySelectorAll('.song-play-card').forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                card.style.background = 'rgba(100,160,255,0.07)';
-            });
-            card.addEventListener('mouseleave', () => {
-                card.style.background = '';
-            });
+        document.getElementById('snp-stop')?.addEventListener('click', () => {
+            FallingNotes.stop();
+            _playing = false;
+            _activeSongId = null;
+            const npBar = document.getElementById('songs-now-playing');
+            if (npBar) npBar.classList.add('hidden');
+            _closeOverlay();
         });
+    }
+
+    function _closeOverlay() {
+        document.getElementById('song-play-overlay')?.remove();
     }
 
     function _playSong(songId) {
@@ -81,15 +101,13 @@ const SongsView = (() => {
         _playing      = false;
         _activeSongId = songId;
 
-        // Build overlay
         let overlay = document.getElementById('song-play-overlay');
         if (!overlay) {
             overlay = document.createElement('div');
             overlay.id = 'song-play-overlay';
-            overlay.style.cssText = `
-                position:fixed;inset:0;z-index:300;background:#0d0d17;
-                display:flex;flex-direction:column;animation:fadeIn 0.2s ease
-            `;
+            overlay.style.cssText =
+                'position:fixed;inset:0;z-index:300;background:#0d0d17;' +
+                'display:flex;flex-direction:column;animation:fadeIn 0.2s ease';
             document.body.appendChild(overlay);
         }
 
@@ -100,21 +118,29 @@ const SongsView = (() => {
                     font-size:1.2rem;cursor:pointer;padding:4px 8px;border-radius:8px;font-family:inherit">
                     ←
                 </button>
-                <div style="flex:1">
-                    <div style="font-size:0.88rem;font-weight:800;color:#e0eaff">${song.thumbnail} ${song.title}</div>
-                    <div style="font-size:0.7rem;color:#4a6888">${song.artist} · ${song.bpm} BPM</div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:0.88rem;font-weight:800;color:#e0eaff;
+                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                        ${song.thumbnail} ${song.title}
+                    </div>
+                    <div style="font-size:0.7rem;color:#4a6888">
+                        ${song.artist} · ♩${song.bpm} BPM · ${song.timeSignature}
+                    </div>
                 </div>
-                <button id="song-wait-btn" class="lv-play-mode-btn active"
-                    style="font-size:0.7rem;padding:5px 10px">⏸ Chờ nốt</button>
+                <button id="song-wait-btn" class="lv-play-mode-btn ${_waitMode ? 'active' : ''}">
+                    ⏸ Chờ nốt
+                </button>
             </div>
 
-            <div id="song-falling-area" style="flex:1;min-height:0;position:relative;background:rgba(0,0,0,0.4)">
-                <canvas id="song-falling-canvas" style="width:100%;height:100%"></canvas>
+            <div id="song-falling-area"
+                style="flex:1;min-height:0;position:relative;background:rgba(0,0,0,0.4)">
+                <canvas id="song-falling-canvas"
+                    style="position:absolute;inset:0;width:100%;height:100%"></canvas>
             </div>
 
-            <div id="song-piano-mount" style="height:220px;flex-shrink:0;display:flex;
-                align-items:center;justify-content:center;overflow:hidden;
-                background:rgba(10,10,20,0.8)">
+            <div id="song-piano-keys"
+                style="height:220px;flex-shrink:0;display:flex;align-items:center;
+                       justify-content:center;overflow:hidden;background:rgba(10,10,20,0.8)">
             </div>
 
             <div style="display:flex;align-items:center;gap:10px;padding:10px 16px 14px;
@@ -127,43 +153,42 @@ const SongsView = (() => {
                 </button>
             </div>`;
 
-        // Wire close
         document.getElementById('song-close-btn')?.addEventListener('click', () => {
             FallingNotes.stop();
             _playing = false;
             overlay.remove();
+            const npBar = document.getElementById('songs-now-playing');
+            if (npBar) npBar.classList.add('hidden');
         });
 
-        // Wait mode toggle
-        let waitMode = true;
         document.getElementById('song-wait-btn')?.addEventListener('click', e => {
-            waitMode = !waitMode;
-            e.currentTarget.classList.toggle('active', waitMode);
-            FallingNotes.setWaitMode(waitMode);
+            _waitMode = !_waitMode;
+            e.currentTarget.classList.toggle('active', _waitMode);
+            FallingNotes.setWaitMode(_waitMode);
         });
 
         // Mount piano
-        const pianoMount = document.getElementById('song-piano-mount');
-        if (pianoMount) {
-            pianoMount.id = 'song-piano-keys';
-            Visualizer.destroy();
-            const { canvas, noteMap } = Keyboard.render('song-piano-keys', '61');
-            Visualizer.init(canvas, noteMap);
+        Visualizer.destroy();
+        const { canvas: pianoCanvas, noteMap } = Keyboard.render('song-piano-keys', '61');
+        Visualizer.init(pianoCanvas, noteMap);
 
-            // Init falling notes canvas
-            const fallingArea  = document.getElementById('song-falling-area');
-            const fallingCanvas = document.getElementById('song-falling-canvas');
-            if (fallingCanvas && fallingArea) {
-                fallingCanvas.width  = fallingArea.clientWidth  || window.innerWidth;
-                fallingCanvas.height = fallingArea.clientHeight || 200;
-                FallingNotes.init(fallingCanvas, noteMap);
-            }
+        // Init falling notes
+        const fallingArea   = document.getElementById('song-falling-area');
+        const fallingCanvas = document.getElementById('song-falling-canvas');
+        if (fallingCanvas && fallingArea) {
+            fallingCanvas.width  = fallingArea.clientWidth  || window.innerWidth;
+            fallingCanvas.height = fallingArea.clientHeight || 200;
+            FallingNotes.init(fallingCanvas, noteMap);
+            new ResizeObserver(() => {
+                const w = fallingArea.clientWidth  || window.innerWidth;
+                const h = fallingArea.clientHeight || 200;
+                FallingNotes.resize(w, h);
+            }).observe(fallingArea);
         }
 
-        // Load sequence
         const sequence = SongsData.toSequence(songId);
         FallingNotes.loadSequence(sequence, song.bpm);
-        FallingNotes.setWaitMode(waitMode);
+        FallingNotes.setWaitMode(_waitMode);
 
         FallingNotes.onSequenceEnd(() => {
             _playing = false;
@@ -171,13 +196,20 @@ const SongsView = (() => {
             if (btn) { btn.textContent = '🎉 Xong! Chơi lại?'; btn.disabled = false; }
         });
 
-        // Start button
         document.getElementById('song-start-btn')?.addEventListener('click', e => {
             if (!_playing) {
                 _playing = true;
                 e.currentTarget.textContent = '⏸ Đang chơi...';
-                e.currentTarget.disabled = true;
+                e.currentTarget.disabled    = true;
                 FallingNotes.start();
+
+                // Show now-playing bar
+                const npBar = document.getElementById('songs-now-playing');
+                if (npBar) {
+                    document.getElementById('snp-thumb').textContent = song.thumbnail;
+                    document.getElementById('snp-title').textContent = song.title;
+                    npBar.classList.remove('hidden');
+                }
             }
         });
 
@@ -185,7 +217,7 @@ const SongsView = (() => {
             FallingNotes.stop();
             _playing = false;
             FallingNotes.loadSequence(sequence, song.bpm);
-            FallingNotes.setWaitMode(waitMode);
+            FallingNotes.setWaitMode(_waitMode);
             const btn = document.getElementById('song-start-btn');
             if (btn) { btn.textContent = '▶ Bắt đầu'; btn.disabled = false; }
         });
