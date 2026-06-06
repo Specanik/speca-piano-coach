@@ -313,7 +313,58 @@ const FreePlayView = (() => {
         _updateMidiDot();
     }
 
-    // ── Chord / note detection ────────────────────────────────────────
+    // ── Built-in chord pattern table ─────────────────────────────────
+    const CHORD_PATTERNS = [
+        // sorted longest → shortest so specifics match before subsets
+        { intervals: [0,3,6,9],  suffix: 'dim7',   label: 'dim7',  formula: '1–♭3–♭5–♭♭7' },
+        { intervals: [0,4,7,11], suffix: 'maj7',   label: 'maj7',  formula: '1–3–5–7'      },
+        { intervals: [0,3,7,10], suffix: 'm7',     label: 'm7',    formula: '1–♭3–5–♭7'    },
+        { intervals: [0,4,7,10], suffix: '7',      label: '7',     formula: '1–3–5–♭7'     },
+        { intervals: [0,3,6,10], suffix: 'm7♭5',   label: 'm7♭5', formula: '1–♭3–♭5–♭7'   },
+        { intervals: [0,2,7],    suffix: 'sus2',   label: 'sus2',  formula: '1–2–5'        },
+        { intervals: [0,5,7],    suffix: 'sus4',   label: 'sus4',  formula: '1–4–5'        },
+        { intervals: [0,3,6],    suffix: 'dim',    label: 'dim',   formula: '1–♭3–♭5'      },
+        { intervals: [0,4,8],    suffix: 'aug',    label: 'aug',   formula: '1–3–♯5'       },
+        { intervals: [0,4,7],    suffix: '',       label: '',      formula: '1–3–5'        },
+        { intervals: [0,3,7],    suffix: 'm',      label: 'm',     formula: '1–♭3–5'       },
+    ];
+
+    function _detectChord(midiNotes) {
+        if (midiNotes.length < 2) return null;
+
+        // Get unique pitch classes, sorted ascending
+        const pcs = [...new Set(midiNotes.map(m => m % 12))].sort((a, b) => a - b);
+        if (pcs.length < 2) return null;
+
+        let best = null;
+        let bestScore = -1;
+
+        for (const rootPc of pcs) {
+            // Normalize all pcs relative to this root
+            const intervals = pcs.map(pc => (pc - rootPc + 12) % 12).sort((a, b) => a - b);
+
+            for (const pat of CHORD_PATTERNS) {
+                // All pattern intervals must be present; extra notes OK
+                const matched = pat.intervals.every(i => intervals.includes(i));
+                if (!matched) continue;
+
+                // Score: prefer longer patterns and more coverage
+                const score = pat.intervals.length * 10 + (pcs.length === pat.intervals.length ? 5 : 0);
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = {
+                        root:    NOTE_NAMES[rootPc],
+                        suffix:  pat.suffix,
+                        label:   pat.label,
+                        formula: pat.formula,
+                    };
+                }
+            }
+        }
+        return best;
+    }
+
+    // ── Chord / note display ──────────────────────────────────────────
     function _updateChordDisplay(notes) {
         const nameEl    = document.getElementById('fp-chord-name');
         const formulaEl = document.getElementById('fp-chord-formula');
@@ -331,30 +382,35 @@ const FreePlayView = (() => {
 
         if (emptyEl) emptyEl.style.display = 'none';
 
-        // Note chips
+        // Note chips — show each pressed note name
         if (chipsEl) {
-            chipsEl.innerHTML = notes.map(m => {
+            chipsEl.innerHTML = [...notes].sort((a,b) => a - b).map(m => {
                 const name = NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1);
                 return `<div class="fp-note-chip">${name}</div>`;
             }).join('');
         }
 
-        // Chord detection via existing ChordDetector / Chords module
-        let chordName = '';
-        let formula   = '';
-
-        if (typeof Chords !== 'undefined' && Chords.detect) {
-            const result = Chords.detect(notes);
-            if (result) {
-                chordName = result.name  || '';
-                formula   = result.formula || '';
-            }
-        } else if (notes.length === 1) {
-            chordName = NOTE_NAMES[notes[0] % 12];
+        // Single note: just show note name, no chord formula
+        if (notes.length === 1) {
+            nameEl.textContent    = NOTE_NAMES[notes[0] % 12];
+            formulaEl.textContent = '';
+            nameEl.classList.remove('sp-correct');
+            return;
         }
 
-        nameEl.textContent    = chordName || NOTE_NAMES[notes[0] % 12];
-        formulaEl.textContent = formula;
+        // Multiple notes: detect chord
+        const chord = _detectChord([...notes]);
+        if (chord) {
+            nameEl.textContent    = chord.root + chord.suffix;
+            formulaEl.textContent = chord.formula;
+            nameEl.classList.add('sp-correct');
+        } else {
+            // No known chord — show interval description
+            const pcs = [...new Set([...notes].map(m => m % 12))];
+            nameEl.textContent    = pcs.map(pc => NOTE_NAMES[pc]).join(' + ');
+            formulaEl.textContent = '';
+            nameEl.classList.remove('sp-correct');
+        }
     }
 
     // ── NoteOn / NoteOff hooks (called by AppShell's InputRouter) ─────
