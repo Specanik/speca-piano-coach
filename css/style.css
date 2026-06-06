@@ -897,9 +897,19 @@ body {
 }
 
 .key-white.active {
-    background: linear-gradient(to bottom, #a8c8e8 0%, #c0daf0 25%, #cee5f5 100%);
-    box-shadow: inset 0 4px 10px rgba(0, 80, 160, 0.2), 0 3px 5px rgba(0, 0, 0, 0.4);
-    transform: translateY(1px);
+    background: linear-gradient(to bottom, #8ab8e0 0%, #b0d4f0 25%, #c8e8f8 100%);
+    box-shadow:
+        inset 0 4px 14px rgba(0, 80, 160, 0.3),
+        0 3px 5px rgba(0, 0, 0, 0.4),
+        0 0 18px rgba(74, 158, 255, 0.55),
+        0 0 40px rgba(74, 158, 255, 0.2);
+    transform: translateY(2px);
+    animation: key-white-flash 0.4s ease-out;
+}
+
+@keyframes key-white-flash {
+    0%   { box-shadow: inset 0 4px 14px rgba(0,80,160,0.3), 0 0 60px rgba(74,158,255,0.9), 0 0 100px rgba(74,158,255,0.4); }
+    100% { box-shadow: inset 0 4px 14px rgba(0,80,160,0.3), 0 0 18px rgba(74,158,255,0.55), 0 0 40px rgba(74,158,255,0.2); }
 }
 
 /* ── Black keys ── */
@@ -924,12 +934,20 @@ body {
 }
 
 .key-black.active {
-    background: linear-gradient(160deg, #1a5a90 0%, #0c3055 30%, #061828 100%);
+    background: linear-gradient(160deg, #1a6aaa 0%, #0c3860 30%, #061828 100%);
     box-shadow:
         1px 3px 6px rgba(0, 0, 0, 0.9),
-        inset 0 2px 6px rgba(0, 60, 120, 0.4),
-        inset 0 1px 0 rgba(100, 180, 255, 0.2);
+        inset 0 2px 8px rgba(0, 80, 160, 0.5),
+        inset 0 1px 0 rgba(100, 200, 255, 0.3),
+        0 0 14px rgba(74, 158, 255, 0.7),
+        0 0 30px rgba(74, 158, 255, 0.3);
     transform: translateY(1px);
+    animation: key-black-flash 0.4s ease-out;
+}
+
+@keyframes key-black-flash {
+    0%   { box-shadow: 1px 3px 6px rgba(0,0,0,0.9), inset 0 2px 8px rgba(0,80,160,0.5), 0 0 50px rgba(74,158,255,1), 0 0 80px rgba(74,158,255,0.5); }
+    100% { box-shadow: 1px 3px 6px rgba(0,0,0,0.9), inset 0 2px 8px rgba(0,80,160,0.5), 0 0 14px rgba(74,158,255,0.7), 0 0 30px rgba(74,158,255,0.3); }
 }
 
 /* ── Key labels ── */

@@ -183,3 +183,34 @@ body {
     0%   { opacity: 1; transform: translateY(0); }
     100% { opacity: 0; transform: translateY(-30px); }
 }
+
+/* ── Global key press glow — applied in learn view too ─────────────── */
+/* Correct key highlight (learn view target key hit) */
+.key-white.key-correct-hit {
+    animation: key-correct-glow 0.5s ease-out forwards !important;
+}
+.key-black.key-correct-hit {
+    animation: key-correct-glow-dark 0.5s ease-out forwards !important;
+}
+
+@keyframes key-correct-glow {
+    0%   { box-shadow: inset 0 4px 14px rgba(0,212,170,0.4),
+                       0 0 60px rgba(0,212,170,0.9),
+                       0 0 100px rgba(0,212,170,0.5); }
+    100% { box-shadow: inset 0 4px 10px rgba(0,80,160,0.2),
+                       0 0 20px rgba(74,158,255,0.4); }
+}
+@keyframes key-correct-glow-dark {
+    0%   { box-shadow: 1px 3px 6px rgba(0,0,0,0.9),
+                       0 0 50px rgba(0,212,170,1),
+                       0 0 80px rgba(0,212,170,0.5); }
+    100% { box-shadow: 1px 3px 6px rgba(0,0,0,0.9),
+                       0 0 14px rgba(74,158,255,0.6); }
+}
+
+/* Visualizer canvas in learn mode — smooth trails */
+.learn-view .visualizer,
+.fp-piano-area .visualizer {
+    border-radius: 6px 6px 0 0;
+    image-rendering: pixelated;
+}

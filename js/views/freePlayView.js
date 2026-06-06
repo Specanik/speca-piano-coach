@@ -159,8 +159,9 @@ const FreePlayView = (() => {
     }
 
     // ── Stage canvas ripple visualizer ───────────────────────────────
-    let _ripples = [];
-    let _rafId   = null;
+    let _ripples   = [];   // ring ripples
+    let _particles = [];   // spark particles
+    let _rafId     = null;
 
     const NOTE_COLORS = [
         '#4a9eff','#00d4aa','#a78bfa','#fb923c','#f472b6',
@@ -171,12 +172,13 @@ const FreePlayView = (() => {
         const canvas = document.getElementById('fp-stage-canvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        _ripples = [];
+        _ripples   = [];
+        _particles = [];
 
         const resize = () => {
             const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width  = rect.width  || 600;
-            canvas.height = rect.height || 200;
+            canvas.width  = Math.max(rect.width,  100);
+            canvas.height = Math.max(rect.height, 60);
         };
         resize();
         const ro = new ResizeObserver(resize);
@@ -185,24 +187,37 @@ const FreePlayView = (() => {
 
         const draw = () => {
             _rafId = requestAnimationFrame(draw);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Trailing fade instead of full clear — creates motion blur
+            ctx.fillStyle = 'rgba(8,8,16,0.18)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            _ripples = _ripples.filter(r => r.alpha > 0.01);
+            // ── Ripple rings ─────────────────────────────────────────
+            _ripples = _ripples.filter(r => r.alpha > 0.008);
             for (const r of _ripples) {
                 r.radius += r.speed;
-                r.alpha  *= 0.94;
+                r.alpha  *= r.decay;
+                const hex = Math.round(r.alpha * 255).toString(16).padStart(2,'0');
                 ctx.beginPath();
                 ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-                ctx.strokeStyle = r.color + Math.round(r.alpha * 255).toString(16).padStart(2,'0');
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = r.color + hex;
+                ctx.lineWidth = r.lineW * (1 - r.radius / (r.maxR + 1));
                 ctx.stroke();
-                // inner fill dot
-                if (r.radius < 30) {
-                    ctx.beginPath();
-                    ctx.arc(r.x, r.y, Math.max(0, 12 - r.radius * 0.4), 0, Math.PI * 2);
-                    ctx.fillStyle = r.color + Math.round(r.alpha * 0.6 * 255).toString(16).padStart(2,'0');
-                    ctx.fill();
-                }
+            }
+
+            // ── Spark particles ───────────────────────────────────────
+            _particles = _particles.filter(p => p.life > 0);
+            for (const p of _particles) {
+                p.x   += p.vx;
+                p.y   += p.vy;
+                p.vy  += 0.08;          // gravity
+                p.vx  *= 0.97;
+                p.life -= p.decay;
+                const a   = Math.max(0, p.life);
+                const hex = Math.round(a * 255).toString(16).padStart(2,'0');
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r * a, 0, Math.PI * 2);
+                ctx.fillStyle = p.color + hex;
+                ctx.fill();
             }
         };
         draw();
@@ -212,7 +227,8 @@ const FreePlayView = (() => {
         if (_rafId) { cancelAnimationFrame(_rafId); _rafId = null; }
         const canvas = document.getElementById('fp-stage-canvas');
         if (canvas?._ro) { canvas._ro.disconnect(); canvas._ro = null; }
-        _ripples = [];
+        _ripples   = [];
+        _particles = [];
     }
 
     function _spawnRipple(midi) {
@@ -220,17 +236,41 @@ const FreePlayView = (() => {
         if (!canvas) return;
         const w = canvas.width;
         const h = canvas.height;
-        // X spread across canvas based on midi pitch (21-108)
         const t = Math.max(0, Math.min(1, (midi - 21) / 87));
-        const x = 20 + t * (w - 40) + (Math.random() - 0.5) * 30;
-        const y = h * 0.4 + (Math.random() - 0.5) * h * 0.35;
-        _ripples.push({
-            x, y,
-            radius: 4,
-            speed: 1.8 + Math.random() * 1.2,
-            alpha: 0.85,
-            color: NOTE_COLORS[midi % 12]
-        });
+        const x = 16 + t * (w - 32) + (Math.random() - 0.5) * 24;
+        const y = h * 0.45 + (Math.random() - 0.5) * h * 0.3;
+        const color = NOTE_COLORS[midi % 12];
+
+        // 3 concentric rings — fast inner, slow outer
+        for (let i = 0; i < 3; i++) {
+            _ripples.push({
+                x, y,
+                radius: 2 + i * 4,
+                speed:  2.4 - i * 0.5,
+                alpha:  0.9 - i * 0.15,
+                decay:  0.93 - i * 0.01,
+                lineW:  3 - i,
+                maxR:   80 + i * 40,
+                color,
+            });
+        }
+
+        // Spark burst — 6-8 particles flying outward
+        const sparks = 6 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < sparks; i++) {
+            const angle  = (i / sparks) * Math.PI * 2 + Math.random() * 0.4;
+            const speed  = 1.5 + Math.random() * 2.5;
+            _particles.push({
+                x, y,
+                vx:    Math.cos(angle) * speed,
+                vy:    Math.sin(angle) * speed - 1,
+                r:     2 + Math.random() * 2,
+                life:  0.9 + Math.random() * 0.1,
+                decay: 0.022 + Math.random() * 0.012,
+                color,
+            });
+        }
+
         // Hide hint on first play
         const hint = document.getElementById('fp-stage-hint');
         if (hint && !hint.classList.contains('hidden')) hint.classList.add('hidden');
@@ -410,30 +450,38 @@ const FreePlayView = (() => {
         const emptyEl   = document.getElementById('fp-chord-empty');
         if (!nameEl) return;
 
+        const bar = document.getElementById('fp-chord-bar');
+
         if (notes.length === 0) {
             nameEl.textContent    = '—';
             formulaEl.textContent = '';
             if (chipsEl) chipsEl.innerHTML = '';
             if (emptyEl) emptyEl.style.display = '';
+            nameEl.classList.remove('sp-correct');
+            bar?.classList.remove('has-chord', 'has-note');
             _renderSuggestions([]);
             return;
         }
 
         if (emptyEl) emptyEl.style.display = 'none';
+        bar?.classList.add('has-note');
 
-        // Note chips — sorted ascending by pitch
+        // Note chips — sorted ascending by pitch (bottom of bar)
         if (chipsEl) {
             chipsEl.innerHTML = [...notes].sort((a, b) => a - b).map(m => {
-                const name = NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1);
-                return `<div class="fp-note-chip">${name}</div>`;
+                const noteName = NOTE_NAMES[m % 12];
+                const octave   = Math.floor(m / 12 - 1);
+                return `<div class="fp-note-chip">${noteName}<sub style="font-size:0.7em;opacity:0.7">${octave}</sub></div>`;
             }).join('');
         }
 
         // Single note
         if (notes.length === 1) {
-            nameEl.textContent    = NOTE_NAMES[[...notes][0] % 12];
-            formulaEl.textContent = '';
+            const noteName = NOTE_NAMES[[...notes][0] % 12];
+            nameEl.textContent    = noteName;
+            formulaEl.textContent = 'nốt đơn';
             nameEl.classList.remove('sp-correct');
+            bar?.classList.remove('has-chord');
             _renderSuggestions(notes);
             return;
         }
@@ -442,19 +490,20 @@ const FreePlayView = (() => {
         const chord = _detectChord([...notes]);
         if (chord) {
             const slash = chord.slash
-                ? `<span style="font-size:0.55em;opacity:0.7">${chord.slash}</span>`
+                ? `<span style="font-size:0.5em;opacity:0.65;vertical-align:middle">${chord.slash}</span>`
                 : '';
             nameEl.innerHTML      = chord.root + chord.suffix + slash;
-            formulaEl.textContent = chord.formula + (chord.slash ? `  (thế ${_inversionLabel(chord.slash)})` : '');
+            formulaEl.textContent = chord.formula + (chord.slash ? `  · thế ${_inversionLabel(chord.slash)}` : '');
             nameEl.classList.add('sp-correct');
-            // Show suggestions only when fewer than 3 distinct PCs (chord might still be incomplete)
+            bar?.classList.add('has-chord');
             const uniquePcs = new Set([...notes].map(m => m % 12)).size;
             _renderSuggestions(uniquePcs <= 2 ? notes : []);
         } else {
             const pcs = [...new Set([...notes].map(m => m % 12))];
-            nameEl.textContent    = pcs.map(pc => NOTE_NAMES[pc]).join('+');
-            formulaEl.textContent = 'hợp âm không xác định';
+            nameEl.textContent    = pcs.map(pc => NOTE_NAMES[pc]).join(' · ');
+            formulaEl.textContent = 'không xác định';
             nameEl.classList.remove('sp-correct');
+            bar?.classList.remove('has-chord');
             _renderSuggestions(notes);
         }
     }
